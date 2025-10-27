@@ -1,0 +1,53 @@
+{
+  "HomePage": {
+    "welcome": "Welcome!",
+    "welcomeBack": "Welcome back!",
+    "startNew": "Start new game",
+    "start": "Start game",
+    "leader": "Leaderboard",
+    "logout": "Change Player",
+    "settings": "Settings",
+    "title": "Fly between pipes and set new records!",
+    "words": "Click to fly • Avoid pipes • Beat your high score!"
+  },
+  "SettingsPage": {
+    "title": "Settings",
+    "lang": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "Controls": {
+    "back": "Back"
+  },
+  "LeaderPage": {
+    "error": "Error loading data:",
+    "tryAgain": "Try Again",
+    "title": "Leaderboard",
+    "player": "Player",
+    "score": "Score",
+    "difficulty": "Difficulty",
+    "date": "Date",
+    "loading": "Loading leaderboard...",
+    "noScores": "No scores yet for {selectedDifficulty} difficulty.",
+    "motivation": "Be the first to play and set a record!",
+    "createTestData": "Create Test Data",
+    "debug": "Debug",
+    "clear": "Clear",
+    "debugInfo": "Debug Info (Click to expand)",
+    "rank": "Rank"
+  },
+  "GamePage": {
+    "gamePaused": "Game Paused",
+    "score": "Score:",
+    "resume": "Resume",
+    "exit": "Exit",
+    "selectDifficulty": "Select Difficulty",
+    "bestScore": "Best score:",
+    "play": "Play",
+    "clickToJump": "Click, Space, or W to Jump and Start!",
+    "gameOver": "Game Over",
+    "retry": "Retry"
+  }
+}
