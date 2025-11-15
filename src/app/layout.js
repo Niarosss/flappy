@@ -16,6 +16,12 @@ const nunito = Nunito({
 export const metadata = {
   title: "Flappy Bird Game",
   description: "Flappy Bird game built with Next.js",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.ico",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default async function RootLayout({ children }) {

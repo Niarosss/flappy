@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef, useCallback, createRef } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStatus } from "@/context/GameStatusContext";
+import { useKeybinding } from "@/hooks/useKeybinding";
+import { useTranslations } from "next-intl";
+
 import Bird from "./Bird";
 import Pipe from "./Pipe";
 import Button from "@/components/ui/Button";
@@ -15,15 +18,12 @@ import {
   ArrowFatLineLeftIcon,
   ArrowsCounterClockwiseIcon,
 } from "@phosphor-icons/react";
-import { useTranslations } from "next-intl";
 
-// Константи для ігрової механіки
 const BIRD_SIZE_W = 38;
 const BIRD_SIZE_H = 28;
 const BIRD_LEFT_POSITION = 50;
 const PIPE_WIDTH = 52;
 
-// 💡 ПРИЙМАЄМО ПРОП onGameOver З БАТЬКІВСЬКОГО КОМПОНЕНТА
 const Game = ({ player, onGameOver }) => {
   const t = useTranslations("GamePage");
   const router = useRouter();
@@ -35,6 +35,11 @@ const Game = ({ player, onGameOver }) => {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [bestScore, setBestScore] = useState(0);
+  const [allBestScores, setAllBestScores] = useState({
+    easy: 0,
+    medium: 0,
+    hard: 0,
+  });
   const [difficulty, setDifficulty] = useState("medium");
   const [gameDimensions, setGameDimensions] = useState({
     width: 400,
@@ -46,7 +51,6 @@ const Game = ({ player, onGameOver }) => {
   const [isPausedUI, setIsPausedUI] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
-  // --- Refs (для логіки гри) ---
   const birdVelocity = useRef(0);
   const gameLoopRef = useRef(null);
   const lastPipeTime = useRef(0);
@@ -58,6 +62,7 @@ const Game = ({ player, onGameOver }) => {
   const pipeDomRefs = useRef(new Map());
   const countdownTimerRef = useRef(null);
   const isPausedRef = useRef(false);
+  const lastFrameTime = useRef(performance.now());
 
   const GAME_WIDTH = gameDimensions.width;
   const GAME_HEIGHT = gameDimensions.height;
@@ -88,25 +93,25 @@ const Game = ({ player, onGameOver }) => {
 
   const difficultySettings = {
     easy: {
-      gravity: 0.2,
-      jump: -5,
-      pipeSpeed: 3,
-      pipeInterval: 1800,
-      pipeGap: 160,
-    },
-    medium: {
-      gravity: 0.3,
-      jump: -6,
-      pipeSpeed: 4,
-      pipeInterval: 1500,
+      gravity: 0.6,
+      jump: -8,
+      pipeSpeed: 7,
+      pipeInterval: 2000,
       pipeGap: 150,
     },
-    hard: {
-      gravity: 0.4,
-      jump: -7,
-      pipeSpeed: 5,
-      pipeInterval: 1200,
+    medium: {
+      gravity: 0.7,
+      jump: -9,
+      pipeSpeed: 8,
+      pipeInterval: 1600,
       pipeGap: 140,
+    },
+    hard: {
+      gravity: 0.8,
+      jump: -10,
+      pipeSpeed: 9,
+      pipeInterval: 1400,
+      pipeGap: 130,
     },
   };
 
@@ -114,38 +119,42 @@ const Game = ({ player, onGameOver }) => {
     scoreRef.current = score;
   }, [score]);
 
-  // ❌ ВИДАЛЕНО: saveOrUpdateScore та saveBestScore. Логіка збереження тепер у onGameOver пропі.
-
-  // ✅ СПРОЩЕНО: loadBestScore тепер лише завантажує найкращий результат
-  const loadBestScore = useCallback(async () => {
+  // Завантажуємо всі найкращі результати один раз
+  const loadAllBestScores = useCallback(async () => {
     if (!player?.id) {
-      setBestScore(0);
+      setAllBestScores({ easy: 0, medium: 0, hard: 0 });
       return;
     }
     try {
-      const response = await fetch(
-        `/api/scores/?playerId=${player.id}&difficulty=${difficulty}`
-      );
-
+      const response = await fetch(`/api/scores/?playerId=${player.id}`);
       if (!response.ok) {
         if (response.status === 404 || response.status === 204) {
-          setBestScore(0);
+          setAllBestScores({ easy: 0, medium: 0, hard: 0 });
           return;
         }
         throw new Error(`Server error: ${response.statusText}`);
       }
-
       const data = await response.json();
-      setBestScore(data?.bestScore || 0);
+      setAllBestScores({
+        easy: data.easy || 0,
+        medium: data.medium || 0,
+        hard: data.hard || 0,
+      });
     } catch (error) {
-      console.error("Error loading best score:", error);
-      setBestScore(0);
+      console.error("Error loading all best scores:", error);
+      setAllBestScores({ easy: 0, medium: 0, hard: 0 });
     }
-  }, [player, difficulty]);
+  }, [player]);
 
+  // Завантажуємо результати при монтуванні компонента
   useEffect(() => {
-    loadBestScore();
-  }, [loadBestScore]);
+    loadAllBestScores();
+  }, [loadAllBestScores]);
+
+  // Оновлюємо відображуваний рекорд при зміні складності або завантаженні даних
+  useEffect(() => {
+    setBestScore(allBestScores[difficulty] || 0);
+  }, [difficulty, allBestScores]);
 
   const checkCollision = (birdY, currentPipes) => {
     const birdRect = {
@@ -199,7 +208,6 @@ const Game = ({ player, onGameOver }) => {
     }
     setIsGameActive(false);
 
-    // 💡 ВИКЛИКАЄМО ЗОВНІШНІЙ ПРОП ДЛЯ ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТУ
     if (onGameOver && scoreRef.current > 0) {
       onGameOver(scoreRef.current, difficulty);
     }
@@ -213,11 +221,16 @@ const Game = ({ player, onGameOver }) => {
 
     const settings = difficultySettings[difficulty];
     const now = performance.now();
+    // Нормалізуємо deltaTime до 60 FPS. Якщо FPS=30, deltaTime буде ~2.
+    const deltaTime = (now - lastFrameTime.current) / (1000 / 60);
+    lastFrameTime.current = now;
+
     let currentPipes = pipesRef.current;
     let pipesAddedOrRemoved = false;
 
-    birdVelocity.current += settings.gravity;
-    let newY = birdY.current + birdVelocity.current;
+    // Застосовуємо deltaTime до фізики
+    birdVelocity.current += settings.gravity * deltaTime;
+    let newY = birdY.current + birdVelocity.current * deltaTime;
     const newRotation = Math.min(Math.max(-30, birdVelocity.current * 6), 90);
 
     if (newY > GAME_HEIGHT - BIRD_SIZE_H || newY < 0) {
@@ -234,7 +247,8 @@ const Game = ({ player, onGameOver }) => {
 
     let updatedPipes = currentPipes
       .map((pipe) => {
-        const newX = pipe.x - settings.pipeSpeed;
+        // Застосовуємо deltaTime до руху труб
+        const newX = pipe.x - settings.pipeSpeed * deltaTime;
         const pipeRefs = pipeDomRefs.current.get(pipe.id);
 
         if (pipeRefs?.top.current && pipeRefs?.bottom.current) {
@@ -300,10 +314,12 @@ const Game = ({ player, onGameOver }) => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
   }, [difficulty, endGame, GAME_WIDTH, GAME_HEIGHT, countdown]);
 
-  const handleResumeGame = () => {
-    if (gameOver) return;
+  const handlePause = useCallback(() => {
+    if (gameOver || !gameStarted || isPausedRef.current) return;
 
-    isPausedRef.current = false;
+    isPausedRef.current = true;
+    setIsPausedUI(true);
+    setIsGameActive(false);
 
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
@@ -311,7 +327,16 @@ const Game = ({ player, onGameOver }) => {
     }
     if (countdownTimerRef.current) {
       clearTimeout(countdownTimerRef.current);
+      setCountdown(0);
     }
+    // Зберігаємо результат під час паузи
+    if (onGameOver && scoreRef.current > 0) {
+      onGameOver(scoreRef.current, difficulty);
+    }
+  }, [gameOver, gameStarted, onGameOver, difficulty, setIsGameActive]);
+
+  const handleResumeGame = useCallback(() => {
+    if (gameOver) return;
 
     setIsPausedUI(false);
     setCountdown(3);
@@ -324,10 +349,12 @@ const Game = ({ player, onGameOver }) => {
         countdownTimerRef.current = setTimeout(startCountdown, 1000);
       } else {
         setCountdown(0);
+        setIsGameActive(true);
+        isPausedRef.current = false;
 
         setTimeout(() => {
+          lastFrameTime.current = performance.now(); // Скидаємо час тут
           lastPipeTime.current = performance.now();
-
           if (gameLoopRef.current) {
             cancelAnimationFrame(gameLoopRef.current);
           }
@@ -336,41 +363,7 @@ const Game = ({ player, onGameOver }) => {
       }
     };
     startCountdown();
-  };
-
-  const togglePause = useCallback(() => {
-    if (gameOver || !gameStarted) return;
-
-    const newPauseState = !isPausedRef.current;
-
-    isPausedRef.current = newPauseState;
-    setIsPausedUI(newPauseState);
-    setIsGameActive(!newPauseState);
-
-    if (newPauseState) {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-        gameLoopRef.current = null;
-      }
-      if (countdownTimerRef.current) {
-        clearTimeout(countdownTimerRef.current);
-        setCountdown(0);
-      }
-      // 💡 ЗБЕРІГАЄМО РЕЗУЛЬТАТ ПІД ЧАС ПАУЗИ
-      if (onGameOver && scoreRef.current > 0) {
-        onGameOver(scoreRef.current, difficulty);
-      }
-    } else {
-      handleResumeGame();
-    }
-  }, [
-    gameStarted,
-    gameOver,
-    onGameOver,
-    difficulty,
-    handleResumeGame,
-    setIsGameActive,
-  ]);
+  }, [gameOver, gameLoop, setIsGameActive]);
 
   const handleJump = useCallback(() => {
     if (showDifficultyModal || isPausedRef.current || gameOver || countdown > 0)
@@ -382,6 +375,7 @@ const Game = ({ player, onGameOver }) => {
       setIsGameActive(true);
 
       const settings = difficultySettings[difficulty];
+      lastFrameTime.current = performance.now(); // І скидаємо час тут
       lastPipeTime.current = performance.now() - settings.pipeInterval;
 
       birdVelocity.current = difficultySettings[difficulty].jump;
@@ -398,45 +392,14 @@ const Game = ({ player, onGameOver }) => {
     gameLoop,
   ]);
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (
-        e.key === "Escape" &&
-        gameStarted &&
-        !gameOver &&
-        !showDifficultyModal &&
-        countdown === 0
-      ) {
-        togglePause();
-      }
+  const handleSelectDifficulty = (level) => {
+    setDifficulty(level);
+  };
 
-      if (
-        (e.key === " " || e.key === "w" || e.key === "W") &&
-        !showDifficultyModal &&
-        !gameOver
-      ) {
-        e.preventDefault();
-
-        if (isPausedRef.current && countdown === 0) {
-          togglePause();
-        } else if (!isPausedRef.current && countdown === 0) {
-          handleJump();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [
-    gameStarted,
-    gameOver,
-    showDifficultyModal,
-    togglePause,
-    countdown,
-    handleJump,
-  ]);
+  const handleStartGameFromModal = () => {
+    setShowDifficultyModal(false);
+    handleJump();
+  };
 
   const handleRestart = () => {
     if (gameLoopRef.current) {
@@ -460,7 +423,7 @@ const Game = ({ player, onGameOver }) => {
     lastPipeTime.current = 0;
     scoreUpdatedForPipes.current.clear();
 
-    loadBestScore();
+    loadAllBestScores();
     setShowDifficultyModal(true);
     isPausedRef.current = false;
     setIsPausedUI(false);
@@ -470,10 +433,7 @@ const Game = ({ player, onGameOver }) => {
   };
 
   const handleExitToMenu = async () => {
-    // 💡 ВИКЛИКАЄМО ЗОВНІШНІЙ ПРОП ДЛЯ ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТУ
     if (onGameOver && score > 0) {
-      // Можна передавати лише якщо score > bestScore, але простіше передавати завжди
-      // і дозволити логіці на сервері вирішувати, чи потрібно оновлювати bestScore
       await onGameOver(score, difficulty);
     }
 
@@ -486,15 +446,71 @@ const Game = ({ player, onGameOver }) => {
     router.push("/");
   };
 
-  const handleSelectDifficulty = (level) => {
-    setDifficulty(level);
-    loadBestScore();
-  };
+  // 1. Керування для старту та самої гри (стрибок, пауза)
+  useKeybinding([" ", "w", "W", "Enter", "ц", "Ц"], handleJump, {
+    active:
+      !isPausedRef.current &&
+      !gameOver &&
+      !showDifficultyModal &&
+      countdown === 0,
+  });
 
-  const handleStartGameFromModal = () => {
-    setShowDifficultyModal(false);
-    handleJump();
-  };
+  useKeybinding("Escape", handlePause, {
+    active:
+      gameStarted &&
+      !isPausedRef.current &&
+      !gameOver &&
+      !showDifficultyModal &&
+      countdown === 0,
+  });
+
+  // 2. Керування у модальному вікні ПАУЗИ
+  useKeybinding(["Enter", " "], handleResumeGame, {
+    active: isPausedUI && gameStarted && !gameOver,
+  });
+
+  useKeybinding("Escape", handleExitToMenu, {
+    active: isPausedUI && gameStarted && !gameOver,
+  });
+
+  // 3. Керування у модальному вікні вибору складності
+  const difficulties = ["easy", "medium", "hard"];
+  const currentDifficultyIndex = difficulties.indexOf(difficulty);
+
+  useKeybinding(
+    ["ArrowDown", "s", "S", "і", "І"],
+    () => {
+      const nextIndex = (currentDifficultyIndex + 1) % difficulties.length;
+      handleSelectDifficulty(difficulties[nextIndex]);
+    },
+    { active: showDifficultyModal }
+  );
+
+  useKeybinding(
+    ["ArrowUp", "w", "W", "ц", "Ц"],
+    () => {
+      const prevIndex =
+        (currentDifficultyIndex - 1 + difficulties.length) %
+        difficulties.length;
+      handleSelectDifficulty(difficulties[prevIndex]);
+    },
+    { active: showDifficultyModal }
+  );
+
+  useKeybinding(["Enter", " ", "e", "E", "у", "У"], handleStartGameFromModal, {
+    active: showDifficultyModal,
+  });
+
+  useKeybinding("Escape", () => router.push("/"), {
+    active: showDifficultyModal,
+  });
+
+  // 4. Керування у модальному вікні "Game Over"
+  useKeybinding(["Enter", " ", "e", "E", "у", "У"], handleRestart, {
+    active: gameOver,
+  });
+
+  useKeybinding("Escape", handleExitToMenu, { active: gameOver });
 
   useEffect(() => {
     return () => {
@@ -529,7 +545,7 @@ const Game = ({ player, onGameOver }) => {
             </p>
           </div>
 
-          <Button variant="gray" onClick={togglePause} className="mt-1">
+          <Button variant="gray" onClick={handlePause} className="mt-1">
             <PauseIcon size={18} weight="duotone" />
           </Button>
         </div>
@@ -558,7 +574,7 @@ const Game = ({ player, onGameOver }) => {
             />
           );
         })}
-        <Bird ref={birdDomRef} birdStatus={birdStatus} />
+        {gameStarted && <Bird ref={birdDomRef} birdStatus={birdStatus} />}
       </div>
 
       {/* === Модалка зворотного відліку === */}

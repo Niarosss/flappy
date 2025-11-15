@@ -34,12 +34,16 @@ export default function HomePage() {
   return (
     <Modal className="max-w-md text-center">
       <div className="mb-2 flex items-center justify-center gap-2 ">
-        <BirdIcon size={48} weight="duotone" className="text-yellow-700/50" />
-        <h1 className="text-5xl text-cyan-950/50 dark:text-cyan-300/50 font-extrabold drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+        <BirdIcon
+          size={48}
+          weight="duotone"
+          className="text-yellow-700/50 dark:text-yellow-500/50"
+        />
+        <h1 className="text-5xl text-cyan-950/50 dark:text-cyan-400/50 font-extrabold drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
           Flappy Bird
         </h1>
       </div>
-      <p className="text-neutral-500 dark:text-neutral-300 mb-8">
+      <p className="text-neutral-600 dark:text-neutral-300 mb-8">
         {t("title")}
       </p>
 
@@ -50,14 +54,28 @@ export default function HomePage() {
             <p className="text-lg text-neutral-700 dark:text-neutral-200 font-bold mb-2">
               {t("welcomeBack")}
             </p>
-            <p className="text-xl font-semibold text-green-800 dark:text-green-600">
-              {user.name || user.email}
-            </p>
-            {user.email && (
-              <p className="text-xs text-neutral-700 dark:text-neutral-300  mt-1">
-                ({user.email})
-              </p>
-            )}
+            <div>
+              <div className="flex items-center gap-2 justify-center">
+                {user?.image ? (
+                  <img
+                    src={user.image}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200" />
+                )}
+
+                <p className="text-xl font-semibold text-green-800 dark:text-green-600">
+                  {user.name || user.email}
+                </p>
+              </div>
+              {user.email && (
+                <p className="text-xs text-neutral-700 dark:text-neutral-300  mt-1">
+                  ({user.email})
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <p className="text-lg text-neutral-700 dark:text-neutral-200 font-bold">
