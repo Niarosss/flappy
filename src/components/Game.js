@@ -23,7 +23,8 @@ const BIRD_SIZE_H = 28;
 const BIRD_LEFT_POSITION = 50;
 const PIPE_WIDTH = 52;
 
-const Game = ({ player }) => {
+// 💡 ПРИЙМАЄМО ПРОП onGameOver З БАТЬКІВСЬКОГО КОМПОНЕНТА
+const Game = ({ player, onGameOver }) => {
   const t = useTranslations("GamePage");
   const router = useRouter();
   const gameContainerRef = useRef(null);
@@ -113,44 +114,9 @@ const Game = ({ player }) => {
     scoreRef.current = score;
   }, [score]);
 
-  const saveOrUpdateScore = useCallback(
-    async (currentScore, currentDifficulty) => {
-      if (!player?.id) {
-        return false;
-      }
-      try {
-        const response = await fetch("/api/scores", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            playerId: player.id,
-            score: currentScore,
-            difficulty: currentDifficulty,
-          }),
-        });
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        if (!response.ok)
-          throw new Error(`Server error: ${response.statusText}`);
-        return true;
-      } catch (error) {
-        return false;
-      }
-    },
-    [player]
-  );
+  // ❌ ВИДАЛЕНО: saveOrUpdateScore та saveBestScore. Логіка збереження тепер у onGameOver пропі.
 
-  const saveBestScore = useCallback(
-    async (currentScore) => {
-      if (currentScore > bestScore && currentScore > 0) {
-        const success = await saveOrUpdateScore(currentScore, difficulty);
-        if (success) {
-          setBestScore(currentScore);
-        }
-      }
-    },
-    [bestScore, saveOrUpdateScore, difficulty]
-  );
-
+  // ✅ СПРОЩЕНО: loadBestScore тепер лише завантажує найкращий результат
   const loadBestScore = useCallback(async () => {
     if (!player?.id) {
       setBestScore(0);
@@ -160,12 +126,19 @@ const Game = ({ player }) => {
       const response = await fetch(
         `/api/scores/?playerId=${player.id}&difficulty=${difficulty}`
       );
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      if (!response.ok && response.status !== 404)
+
+      if (!response.ok) {
+        if (response.status === 404 || response.status === 204) {
+          setBestScore(0);
+          return;
+        }
         throw new Error(`Server error: ${response.statusText}`);
-      const data = response.status === 404 ? {} : await response.json();
+      }
+
+      const data = await response.json();
       setBestScore(data?.bestScore || 0);
     } catch (error) {
+      console.error("Error loading best score:", error);
       setBestScore(0);
     }
   }, [player, difficulty]);
@@ -225,9 +198,14 @@ const Game = ({ player }) => {
       setCountdown(0);
     }
     setIsGameActive(false);
-    saveBestScore(scoreRef.current);
+
+    // 💡 ВИКЛИКАЄМО ЗОВНІШНІЙ ПРОП ДЛЯ ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТУ
+    if (onGameOver && scoreRef.current > 0) {
+      onGameOver(scoreRef.current, difficulty);
+    }
+
     scoreUpdatedForPipes.current.clear();
-  }, [saveBestScore, setIsGameActive]);
+  }, [onGameOver, difficulty, setIsGameActive]);
 
   const gameLoop = useCallback(() => {
     if (gameLoopRef.current === null || isPausedRef.current || countdown > 0)
@@ -378,11 +356,21 @@ const Game = ({ player }) => {
         clearTimeout(countdownTimerRef.current);
         setCountdown(0);
       }
-      saveBestScore(scoreRef.current);
+      // 💡 ЗБЕРІГАЄМО РЕЗУЛЬТАТ ПІД ЧАС ПАУЗИ
+      if (onGameOver && scoreRef.current > 0) {
+        onGameOver(scoreRef.current, difficulty);
+      }
     } else {
       handleResumeGame();
     }
-  }, [gameStarted, gameOver, saveBestScore, handleResumeGame, setIsGameActive]);
+  }, [
+    gameStarted,
+    gameOver,
+    onGameOver,
+    difficulty,
+    handleResumeGame,
+    setIsGameActive,
+  ]);
 
   const handleJump = useCallback(() => {
     if (showDifficultyModal || isPausedRef.current || gameOver || countdown > 0)
@@ -482,9 +470,13 @@ const Game = ({ player }) => {
   };
 
   const handleExitToMenu = async () => {
-    if (score > 0 && score > bestScore) {
-      await saveBestScore(score);
+    // 💡 ВИКЛИКАЄМО ЗОВНІШНІЙ ПРОП ДЛЯ ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТУ
+    if (onGameOver && score > 0) {
+      // Можна передавати лише якщо score > bestScore, але простіше передавати завжди
+      // і дозволити логіці на сервері вирішувати, чи потрібно оновлювати bestScore
+      await onGameOver(score, difficulty);
     }
+
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
     }
@@ -527,10 +519,14 @@ const Game = ({ player }) => {
             className=" text-xl text-center"
             style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.5)" }}
           >
-            <span className="font-bold text-neutral-700">{score}</span>
+            <span className="font-bold text-neutral-700 dark:text-neutral-300">
+              {score}
+            </span>
             <span className="text-neutral-300"> | </span>
             <span className="text-green-600 font-bold">{bestScore}</span>
-            <p className="text-neutral-700 capitalize text-sm">{difficulty}</p>
+            <p className="text-neutral-700 dark:text-neutral-300 capitalize text-sm">
+              {difficulty}
+            </p>
           </div>
 
           <Button variant="gray" onClick={togglePause} className="mt-1">
@@ -576,8 +572,8 @@ const Game = ({ player }) => {
 
       {/* === Модалка паузи === */}
       {isPausedUI && gameStarted && !gameOver && countdown === 0 && (
-        <Modal className="max-w-xs text-center">
-          <div className="flex flex-col items-center justify-center gap-1 mb-6">
+        <Modal className="max-w-md text-center">
+          <div className="flex flex-col items-center justify-center gap-1 mb-10">
             <h2 className="text-5xl font-bold text-slate-900 dark:text-slate-50 mb-6 uppercase">
               {t("gamePaused")}
             </h2>
@@ -618,7 +614,7 @@ const Game = ({ player }) => {
               </Button>
             ))}
           </div>
-          <p className="mt-4 text-base text-neutral-700">
+          <p className="mt-4 text-base text-neutral-700 dark:text-neutral-400">
             {t("bestScore")}{" "}
             <span className="font-bold text-green-600">{bestScore}</span>
           </p>
@@ -656,8 +652,8 @@ const Game = ({ player }) => {
 
       {/* === Модалка Game Over === */}
       {gameOver && (
-        <Modal className="max-w-xs text-center">
-          <h2 className="text-5xl font-bold text-red-500/80 dark:text-red-500  mb-10">
+        <Modal className="max-w-md text-center">
+          <h2 className="text-5xl font-bold text-red-500/80 dark:text-red-500 mb-10">
             {t("gameOver")}
           </h2>
           <p className="text-xl mb-2 text-neutral-700 dark:text-neutral-300">

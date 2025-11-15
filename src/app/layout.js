@@ -2,10 +2,10 @@ import { Nunito } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
+import { SessionProvider } from "next-auth/react";
 import { GameStatusProvider } from "@/context/GameStatusContext";
 import Background from "@/components/Background";
 import "./globals.css";
-import SessionWrapper from "@/components/SessionWrapper";
 
 const nunito = Nunito({
   subsets: ["cyrillic", "latin"],
@@ -27,8 +27,8 @@ export default async function RootLayout({ children }) {
         <NextIntlClientProvider>
           <GameStatusProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              {/* <Background /> */}
-              <SessionWrapper>{children}</SessionWrapper>
+              <Background />
+              <SessionProvider>{children}</SessionProvider>
             </ThemeProvider>
           </GameStatusProvider>
         </NextIntlClientProvider>

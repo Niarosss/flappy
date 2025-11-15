@@ -1,90 +1,97 @@
-import { db } from "@/lib/db_old";
+import { NextResponse } from "next/server";
+import db from "@/lib/Database";
 
-export async function GET(req) {
+/**
+ * GET: Отримує найкращий результат для конкретного гравця (playerId + difficulty)
+ * АБО отримує Топ-10 для рівня складності (лише difficulty).
+ */
+export async function GET(request) {
   try {
-    const url = new URL(req.url);
-    const playerId = url.searchParams.get("playerId");
-    const difficulty = url.searchParams.get("difficulty");
+    const { searchParams } = new URL(request.url);
+    const playerId = searchParams.get("playerId");
+    const difficulty = searchParams.get("difficulty");
 
-    // Якщо є playerId - повертаємо результати гравця
-    if (playerId) {
-      if (!playerId) {
-        return new Response(JSON.stringify({ error: "playerId required" }), {
-          status: 400,
-        });
-      }
-
-      const bestScores = await db.getPlayerBestScores(
-        parseInt(playerId),
-        difficulty || null
-      );
-
-      return new Response(
-        JSON.stringify({
-          bestScores,
-          bestScore: difficulty
-            ? bestScores[difficulty] || 0
-            : Math.max(...Object.values(bestScores), 0),
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
+    // Перевірка на відсутність difficulty, що призводило б до 400, але
+    // у вашому лозі difficulty=medium завжди присутній.
+    if (!difficulty) {
+      return NextResponse.json(
+        { error: "Missing required parameter: difficulty" },
+        { status: 400 } // Bad Request
       );
     }
 
-    // Якщо немає playerId - повертаємо таблицю лідерів
-    const leaderboard = await db.getLeaderboard(difficulty || null);
+    // --- ЛОГІКА ДЛЯ ОТРИМАННЯ ОДНОГО РЕЗУЛЬТАТУ ГРАВЦЯ (З Game.js) ---
+    if (playerId) {
+      console.log(
+        `[DB] Fetching single score for Player: ${playerId}, Difficulty: ${difficulty}`
+      );
+      const bestScoreValue = await db.getBestScore({ playerId, difficulty });
 
-    return new Response(JSON.stringify(leaderboard), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    console.error("Error fetching scores:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-    });
+      return NextResponse.json(
+        { bestScore: bestScoreValue || 0 }, // Повертаємо 0, якщо не знайдено
+        { status: 200 }
+      );
+    }
+
+    // --- ЛОГІКА ДЛЯ ОТРИМАННЯ ТОП-10 (З Leaderboard.js - ВИПРАВЛЯЄ ПОМИЛКУ 400) ---
+    else {
+      // Якщо playerId відсутній, очікуємо запит на Leaderboard
+      console.log(`[DB] Fetching top 10 scores for Difficulty: ${difficulty}`);
+      const topScores = await db.getTopScores(difficulty);
+
+      // Leaderboard.js очікує об'єкт { leaderboard: [...] }
+      return NextResponse.json({ leaderboard: topScores }, { status: 200 });
+    }
+  } catch (error) {
+    // Покращена обробка 500 помилки
+    console.error(
+      "API Error in GET /api/scores (Internal DB Fail):",
+      error.message
+    );
+
+    return NextResponse.json(
+      {
+        error: `Internal Server Error: Database access failed. Check server logs for details. Reason: ${error.message}`,
+      },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(req) {
+/**
+ * POST: Зберігає або оновлює результат гри.
+ */
+export async function POST(request) {
   try {
-    const { playerId, score, difficulty, updateForDifficulty } =
-      await req.json();
+    const { playerId, score, difficulty } = await request.json();
 
-    if (!playerId || score === undefined || score === null) {
-      return new Response(
-        JSON.stringify({ error: "playerId and score required" }),
+    if (!playerId || score === undefined || !difficulty) {
+      return NextResponse.json(
+        { error: "Missing required fields (playerId, score, difficulty)" },
         { status: 400 }
       );
     }
 
-    let result;
-    if (updateForDifficulty) {
-      // Оновлюємо результат для конкретної складності
-      result = await db.createScore(
-        parseInt(playerId),
-        parseInt(score),
-        difficulty || "medium"
-      );
-    } else {
-      // Створюємо новий результат
-      result = await db.createScore(
-        parseInt(playerId),
-        parseInt(score),
-        difficulty || "medium"
-      );
-    }
+    const updatedRecord = await db.saveOrUpdateScore({
+      playerId,
+      score,
+      difficulty,
+    });
 
-    return new Response(JSON.stringify(result), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    console.error("Error creating score:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-    });
+    return NextResponse.json(
+      { success: true, record: updatedRecord },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(
+      "API Error in POST /api/scores (Internal DB Fail):",
+      error.message
+    );
+    return NextResponse.json(
+      {
+        error: `Internal Server Error: Database access failed. Check server logs for details. Reason: ${error.message}`,
+      },
+      { status: 500 }
+    );
   }
 }

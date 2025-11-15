@@ -5,10 +5,11 @@
     "startNew": "Start new game",
     "start": "Start game",
     "leader": "Leaderboard",
-    "logout": "Change Player",
+    "logout": "Log Out",
     "settings": "Settings",
     "title": "Fly between pipes and set new records!",
-    "words": "Click to fly • Avoid pipes • Beat your high score!"
+    "words": "Click to fly • Avoid pipes • Beat your high score!",
+    "signInGoogle": "Log In"
   },
   "SettingsPage": {
     "title": "Settings",
