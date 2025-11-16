@@ -5,11 +5,10 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const playerId = searchParams.get("playerId");
-    const difficulty = searchParams.get("difficulty");
 
-    // --- ОТРИМАННЯ ВСІХ РЕКОРДІВ ГРАВЦЯ ---
+    // --- Сценарій 1: ОТРИМАННЯ ВСІХ РЕКОРДІВ ОДНОГО ГРАВЦЯ ---
     // Запит: /api/scores?playerId=...
-    if (playerId && !difficulty) {
+    if (playerId) {
       const [easy, medium, hard] = await Promise.all([
         db.getBestScore({ playerId, difficulty: "easy" }),
         db.getBestScore({ playerId, difficulty: "medium" }),
@@ -26,30 +25,10 @@ export async function GET(request) {
       );
     }
 
-    // --- ОТРИМАННЯ ВСІХ РЕКОРДІВ ДЛЯ ЛІДЕРБОРДУ ---
-    if (difficulty) {
-      if (!playerId) {
-        const topScores = await db.getTopScores(difficulty);
-        return NextResponse.json({ leaderboard: topScores }, { status: 200 });
-      }
-      // Для одного результату (є playerId)
-      else {
-        const bestScoreValue = await db.getBestScore({ playerId, difficulty });
-        return NextResponse.json(
-          { bestScore: bestScoreValue || 0 },
-          { status: 200 }
-        );
-      }
-    }
-
-    // Якщо параметри не відповідають жодному з випадків
-    return NextResponse.json(
-      {
-        error:
-          "Invalid or missing parameters. Use (playerId), (difficulty), or (playerId & difficulty).",
-      },
-      { status: 400 }
-    );
+    // --- Сценарій 2: ОТРИМАННЯ ВСІХ ЛІДЕРБОРДІВ ---
+    // Запит: /api/scores
+    const allLeaderboards = await db.getTopScores();
+    return NextResponse.json(allLeaderboards, { status: 200 });
   } catch (error) {
     console.error(
       "API Error in GET /api/scores (Internal DB Fail):",

@@ -10,7 +10,7 @@ export default function Settings() {
 
   return (
     <Modal className="max-w-md">
-      <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-10 text-center">
+      <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-100 my-10 text-center">
         {t("title")}
       </h2>
 

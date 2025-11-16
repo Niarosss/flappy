@@ -594,7 +594,7 @@ const Game = ({ player, onGameOver }) => {
       {isPausedUI && gameStarted && !gameOver && countdown === 0 && (
         <Modal className="max-w-md text-center">
           <div className="flex flex-col items-center justify-center gap-1 mb-10">
-            <h2 className="text-5xl font-bold text-slate-900 dark:text-slate-50 mb-6 uppercase">
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 my-6 uppercase">
               {t("gamePaused")}
             </h2>
             <HourglassMediumIcon
@@ -621,8 +621,8 @@ const Game = ({ player, onGameOver }) => {
 
       {/* === Модалка вибору складності === */}
       {showDifficultyModal && !gameStarted && !gameOver && (
-        <Modal className="max-w-xs text-center">
-          <h2 className="text-2xl font-bold mb-6">{t("selectDifficulty")}</h2>
+        <Modal className="max-w-md text-center">
+          <h2 className="text-4xl font-bold my-6">{t("selectDifficulty")}</h2>
           <div className="flex flex-col gap-3">
             {["easy", "medium", "hard"].map((level) => (
               <Button
@@ -673,7 +673,7 @@ const Game = ({ player, onGameOver }) => {
       {/* === Модалка Game Over === */}
       {gameOver && (
         <Modal className="max-w-md text-center">
-          <h2 className="text-5xl font-bold text-red-500/80 dark:text-red-500 mb-10">
+          <h2 className="text-4xl font-bold text-red-500/80 dark:text-red-500 my-10">
             {t("gameOver")}
           </h2>
           <p className="text-xl mb-2 text-neutral-700 dark:text-neutral-300">

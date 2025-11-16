@@ -6,7 +6,11 @@ import Modal from "@/components/ui/Modal";
 import { useTranslations } from "next-intl";
 
 const Leaderboard = () => {
-  const [scores, setScores] = useState([]);
+  const [leaderboards, setLeaderboards] = useState({
+    easy: [],
+    medium: [],
+    hard: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState("medium");
@@ -14,25 +18,28 @@ const Leaderboard = () => {
 
   useEffect(() => {
     fetchScores();
-  }, [selectedDifficulty]);
+  }, []);
 
   const fetchScores = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const url = `/api/scores?difficulty=${selectedDifficulty}`;
+      const url = `/api/scores`;
       const response = await fetch(url);
 
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
       const data = await response.json();
 
-      // Новий формат строго визначений
-      setScores(data.leaderboard ?? []);
+      setLeaderboards({
+        easy: data.easy ?? [],
+        medium: data.medium ?? [],
+        hard: data.hard ?? [],
+      });
     } catch (err) {
       setError(err.message);
-      setScores([]);
+      setLeaderboards({ easy: [], medium: [], hard: [] });
     } finally {
       setLoading(false);
     }
@@ -54,9 +61,11 @@ const Leaderboard = () => {
     );
   }
 
+  const scores = leaderboards[selectedDifficulty];
+
   return (
-    <Modal className="max-w-2xl text-center">
-      <h2 className="text-5xl font-bold text-slate-900 dark:text-slate-50 mb-10">
+    <Modal className="max-w-xl text-center">
+      <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 my-10">
         {t("title")}
       </h2>
 
@@ -77,15 +86,18 @@ const Leaderboard = () => {
         </div>
       </div>
 
-      <div className="bg-white/10 rounded-xl overflow-hidden">
-        <table className="w-full table-fixed border-collapse">
+      <div className="bg-white/10 rounded-xl overflow-y-auto">
+        <table className=" border-collapse w-full">
           <thead>
             <tr className="bg-gray-100/20 text-gray-700 dark:text-gray-200 text-center font-semibold">
-              <th className="w-1/12 px-4 py-3">{t("rank")}</th>
-              <th className="w-5/12 px-4 py-3">{t("player")}</th>
-              <th className="w-2/12 px-4 py-3">{t("score")}</th>
-              <th className="w-2/12 px-4 py-3">{t("difficulty")}</th>
-              <th className="w-2/12 px-4 py-3">{t("date")}</th>
+              <th className="w-2/12 px-3 py-2 md:px-3 md:py-3 ">{t("rank")}</th>
+              <th className="w-2/12 px-3 py-2 md:px-4 md:py-3 ">
+                {t("player")}
+              </th>
+              <th className="w-2/12 px-3 py-2 md:px-4 md:py-3 ">
+                {t("score")}
+              </th>
+              <th className="w-2/12 px-3 py-2 md:px-4 md:py-3 ">{t("date")}</th>
             </tr>
           </thead>
           <tbody>
@@ -93,17 +105,16 @@ const Leaderboard = () => {
               <tr className="h-32">
                 <td
                   colSpan="5"
-                  className="px-4 py-3 text-gray-600 dark:text-gray-400 text-center"
+                  className="px-3 py-2 md:px-4 md:py-3 text-gray-600 dark:text-gray-400 text-center"
                 >
                   {t("loading")}
                 </td>
               </tr>
             ) : scores.length > 0 ? (
               scores.map((record, index) => {
-                const nickname = record.player?.name ?? "Unknown";
-                const score = record.score;
-                const difficulty = record.difficulty;
-                const date = record.createdAt;
+                const nickname = record.user?.name ?? "Unknown";
+                const score = record.bestScore;
+                const date = record.lastPlayed;
 
                 return (
                   <tr
@@ -112,7 +123,7 @@ const Leaderboard = () => {
                       index % 2 === 0 ? "bg-gray-50/10" : "bg-white/20"
                     }
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2 md:px-4 md:py-3">
                       <span
                         className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold
                           ${
@@ -129,16 +140,16 @@ const Leaderboard = () => {
                       </span>
                     </td>
 
-                    <td className="px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
+                    <td className="px-3 py-2 md:px-4 md:py-3 font-medium text-gray-600 dark:text-gray-400">
                       <div className="flex items-center gap-2">
-                        {record.player?.image ? (
+                        {record.user?.image ? (
                           <img
-                            src={record.player.image}
+                            src={record.user.image}
                             alt={nickname}
-                            className="w-8 h-8 rounded-full object-cover"
+                            className="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-200" />
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-200" />
                         )}
 
                         <span className="whitespace-nowrap">{nickname}</span>
@@ -149,22 +160,7 @@ const Leaderboard = () => {
                       {score}
                     </td>
 
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold
-                          ${
-                            difficulty === "easy"
-                              ? "bg-green-100/30 text-green-800"
-                              : difficulty === "medium"
-                              ? "bg-yellow-100/30 text-yellow-800"
-                              : "bg-red-100/30 text-red-800"
-                          }`}
-                      >
-                        {difficulty}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    <td className="px-3 py-2 md:px-4 md:py-3 text-gray-600 dark:text-gray-400">
                       {date ? new Date(date).toLocaleDateString() : "—"}
                     </td>
                   </tr>
@@ -174,7 +170,7 @@ const Leaderboard = () => {
               <tr className="h-32">
                 <td
                   colSpan="5"
-                  className="px-4 py-3 text-gray-600 dark:text-gray-400 text-center"
+                  className="px-3 py-2 md:px-4 md:py-3 text-gray-600 dark:text-gray-400 text-center"
                 >
                   {t("noScores", { selectedDifficulty })}
                   <br />

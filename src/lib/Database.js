@@ -82,7 +82,6 @@ class Database {
    */
   async getBestScore({ playerId, difficulty }) {
     try {
-      // ВИПРАВЛЕНО: 'prisma.score'
       const result = await prisma.score.findUnique({
         where: {
           userId_difficulty: {
@@ -102,34 +101,35 @@ class Database {
   }
 
   /**
-   * Отримує топ-10 результатів для заданої складності.
+   * Отримує топ-10 результатів.
+   * @param {string} [difficulty]
    */
   async getTopScores(difficulty) {
     try {
-      const topScores = await prisma.score.findMany({
-        where: { difficulty },
-        orderBy: { bestScore: "desc" },
-        take: 10,
-        include: {
-          user: {
-            select: {
-              name: true,
-              image: true,
+      // Якщо складність вказана, повертаємо один лідерборд
+      if (difficulty) {
+        return await prisma.score.findMany({
+          where: { difficulty },
+          orderBy: { bestScore: "desc" },
+          take: 10,
+          select: {
+            id: true,
+            bestScore: true,
+            lastPlayed: true,
+            user: {
+              select: { name: true, image: true },
             },
           },
-        },
-      });
+        });
+      }
 
-      return topScores.map((s) => ({
-        id: s.id,
-        player: {
-          name: s.user.name,
-          image: s.user.image ?? null,
-        },
-        score: s.bestScore,
-        difficulty: s.difficulty,
-        createdAt: s.lastPlayed,
-      }));
+      // Якщо складність не вказана, повертаємо всі три лідерборди
+      const [easy, medium, hard] = await Promise.all([
+        this.getTopScores("easy"),
+        this.getTopScores("medium"),
+        this.getTopScores("hard"),
+      ]);
+      return { easy, medium, hard };
     } catch (error) {
       console.error("Помилка при отриманні топ-результатів:", error);
       throw new Error(`Leaderboard retrieval failed: ${error.message}`);

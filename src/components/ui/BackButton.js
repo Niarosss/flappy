@@ -13,7 +13,7 @@ export default function BackButton() {
     <Button
       onClick={() => router.push("/")}
       variant="gray"
-      className="absolute top-6 left-6 z-20"
+      className="absolute top-6 left-6 z-40"
     >
       <CaretCircleLeftIcon size={24} weight="duotone" />
       {t("back")}
