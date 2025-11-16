@@ -117,7 +117,11 @@ const Game = ({ player, onGameOver }) => {
 
   useEffect(() => {
     scoreRef.current = score;
-  }, [score]);
+
+    if (score > bestScore) {
+      setBestScore(score);
+    }
+  }, [score, bestScore]);
 
   // Завантажуємо всі найкращі результати один раз
   const loadAllBestScores = useCallback(async () => {
@@ -221,14 +225,14 @@ const Game = ({ player, onGameOver }) => {
 
     const settings = difficultySettings[difficulty];
     const now = performance.now();
-    // Нормалізуємо deltaTime до 60 FPS. Якщо FPS=30, deltaTime буде ~2.
-    const deltaTime = (now - lastFrameTime.current) / (1000 / 60);
+    // Використовуємо Math.min для стабільності
+    const deltaTime = Math.min((now - lastFrameTime.current) / (1000 / 60), 3);
     lastFrameTime.current = now;
 
     let currentPipes = pipesRef.current;
     let pipesAddedOrRemoved = false;
 
-    // Застосовуємо deltaTime до фізики
+    // Гравітація та рух труб ЗАЛЕЖАТЬ від deltaTime
     birdVelocity.current += settings.gravity * deltaTime;
     let newY = birdY.current + birdVelocity.current * deltaTime;
     const newRotation = Math.min(Math.max(-30, birdVelocity.current * 6), 90);
@@ -378,10 +382,10 @@ const Game = ({ player, onGameOver }) => {
       lastFrameTime.current = performance.now(); // І скидаємо час тут
       lastPipeTime.current = performance.now() - settings.pipeInterval;
 
-      birdVelocity.current = difficultySettings[difficulty].jump;
+      birdVelocity.current = difficultySettings[difficulty].jump; // <-- Без deltaTime
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     } else {
-      birdVelocity.current = difficultySettings[difficulty].jump;
+      birdVelocity.current = difficultySettings[difficulty].jump; // <-- Без deltaTime
     }
   }, [
     showDifficultyModal,
