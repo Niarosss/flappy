@@ -1,4 +1,4 @@
-import Leaderboard from "@/components/Leaderboard";
+import Leaderboard from "@/components/LeaderboardPageClient";
 import BackButton from "@/components/ui/BackButton";
 
 export default async function LeadersPage() {

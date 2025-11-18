@@ -7,21 +7,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [Google],
   callbacks: {
-    // 1. JWT Callback: Додає ID користувача до JWT при вході
     async jwt({ token, user }) {
       if (user) {
-        // 'user' доступний лише під час першого входу/оновлення сесії
-        // 'user.id' тут береться з адаптера (бази даних)
         token.id = user.id;
       }
       return token;
     },
 
-    // 2. Session Callback: Додає ID з JWT до об'єкта 'session'
-    async session({ session, token }) {
-      if (token) {
-        // Беремо ID з токена, який ми встановили вище
-        session.user.id = token.id;
+    // ВИПРАВЛЕННЯ: У "database" стратегії callback отримує `user`, а не `token`.
+    async session({ session, user }) {
+      // `user` - це об'єкт користувача з вашої бази даних.
+      // Додаємо ID користувача до стандартного об'єкта сесії.
+      // `session.user` за замовчуванням вже містить name, email та image.
+      if (session.user) {
+        session.user.id = user.id;
       }
       return session;
     },

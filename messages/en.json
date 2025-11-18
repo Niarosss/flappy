@@ -9,7 +9,8 @@
     "settings": "Settings",
     "title": "Fly between pipes and set new records!",
     "words": "Click to fly • Avoid pipes • Beat your high score!",
-    "signInGoogle": "Log In"
+    "signInGoogle": "Log In",
+    "exit": "Exit"
   },
   "SettingsPage": {
     "title": "Settings",

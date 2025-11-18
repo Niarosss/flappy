@@ -144,7 +144,9 @@ const Leaderboard = () => {
                       <div className="flex items-center gap-2">
                         {record.user?.image ? (
                           <img
-                            src={record.user.image}
+                            src={`/api/image?url=${encodeURIComponent(
+                              record.user.image
+                            )}`}
                             alt={nickname}
                             className="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover"
                           />

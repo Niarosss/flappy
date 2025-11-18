@@ -2,7 +2,7 @@
 import { useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Game from "@/components/Game";
+import Game from "@/components/GamePageClient";
 
 export default function GamePage() {
   const { data: session, status } = useSession();

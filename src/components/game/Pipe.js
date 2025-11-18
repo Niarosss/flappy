@@ -3,10 +3,6 @@
 import React, { forwardRef } from "react";
 import { useTheme } from "next-themes";
 
-const PIPE_WIDTH = 52;
-const FLANGE_WIDTH = 68;
-const FLANGE_HEIGHT = 30;
-
 const THEMES = {
   light: {
     pipe: "#7CB342",
@@ -20,7 +16,13 @@ const THEMES = {
   },
 };
 
-const Pipe = forwardRef(({ pipeData, gameHeight }, ref) => {
+const Pipe = forwardRef(function Pipe(
+  { pipeData, gameHeight, pipeWidth },
+  ref
+) {
+  const FLANGE_WIDTH = pipeWidth + 13;
+  const FLANGE_HEIGHT = 30;
+
   const { x, topHeight, gap } = pipeData;
   const topPipeRef = ref.top;
   const bottomPipeRef = ref.bottom;
@@ -29,7 +31,7 @@ const Pipe = forwardRef(({ pipeData, gameHeight }, ref) => {
   const colors = THEMES[theme];
 
   const transformStyle = `translateX(${x}px)`;
-  const flangeLeftOffset = (PIPE_WIDTH - FLANGE_WIDTH) / 2;
+  const flangeLeftOffset = (pipeWidth - FLANGE_WIDTH) / 1.6;
 
   return (
     <div
@@ -37,7 +39,7 @@ const Pipe = forwardRef(({ pipeData, gameHeight }, ref) => {
         position: "absolute",
         top: 0,
         height: gameHeight,
-        width: PIPE_WIDTH,
+        width: pipeWidth,
       }}
     >
       {/* Верхня труба */}
@@ -46,7 +48,7 @@ const Pipe = forwardRef(({ pipeData, gameHeight }, ref) => {
         style={{
           position: "absolute",
           top: 0,
-          width: PIPE_WIDTH,
+          width: pipeWidth,
           height: topHeight,
           backgroundColor: colors.pipe,
           borderLeft: `2px solid ${colors.border}`,
@@ -81,7 +83,7 @@ const Pipe = forwardRef(({ pipeData, gameHeight }, ref) => {
         style={{
           position: "absolute",
           top: topHeight + gap,
-          width: PIPE_WIDTH,
+          width: pipeWidth,
           height: gameHeight - (topHeight + gap),
           backgroundColor: colors.pipe,
           borderLeft: `2px solid ${colors.border}`,

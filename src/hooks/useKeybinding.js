@@ -12,14 +12,11 @@ export const useKeybinding = (key, callback, options = {}) => {
   const { active = true, preventDefault = true } = options;
   const callbackRef = useRef(callback);
 
-  // Оновлюємо ref, якщо callback змінився, щоб уникнути
-  // зайвого пере-прив'язування слухача.
   useEffect(() => {
     callbackRef.current = callback;
   });
 
   useEffect(() => {
-    // Якщо слухач неактивний, нічого не робимо.
     if (!active) {
       return;
     }
@@ -27,7 +24,6 @@ export const useKeybinding = (key, callback, options = {}) => {
     const handleKeyDown = (event) => {
       const keys = Array.isArray(key) ? key : [key];
 
-      // Перевіряємо, чи натиснута клавіша є однією з цільових.
       if (keys.includes(event.key)) {
         if (preventDefault) {
           event.preventDefault();
@@ -38,9 +34,8 @@ export const useKeybinding = (key, callback, options = {}) => {
 
     window.addEventListener("keydown", handleKeyDown);
 
-    // Функція очищення, яка видаляє слухача.
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [key, active, preventDefault]); // Залежимо від `active`, щоб динамічно вмикати/вимикати.
+  }, [key, active, preventDefault]);
 };

@@ -4,7 +4,7 @@ import { getLocale } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "next-auth/react";
 import { GameStatusProvider } from "@/context/GameStatusContext";
-import Background from "@/components/Background";
+import Background from "@/components/game/Background";
 import "./globals.css";
 
 const nunito = Nunito({

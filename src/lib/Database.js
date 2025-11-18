@@ -6,8 +6,6 @@ const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
-
-// Клас, який обгортає логіку роботи з БД
 class Database {
   /**
    * Зберігає або оновлює результат гри. Оновлює лише, якщо новий результат > bestScore.
@@ -16,12 +14,10 @@ class Database {
     try {
       const numericScore = Number(score);
 
-      // ВИПРАВЛЕНО: 'prisma.score' замість 'prisma.scores'
       const existingRecord = await prisma.score.findUnique({
         where: {
-          // ВИПРАВЛЕНО: Prisma генерує індекс як 'userId_difficulty'
           userId_difficulty: {
-            userId: playerId, // Поле в моделі називається 'userId'
+            userId: playerId,
             difficulty,
           },
         },
@@ -32,7 +28,6 @@ class Database {
 
       if (existingRecord && numericScore > existingRecord.bestScore) {
         // Оновлюємо, якщо новий результат кращий
-        // ВИПРАВЛЕНО: 'prisma.score'
         return await prisma.score.update({
           where: {
             userId_difficulty: {
@@ -41,24 +36,22 @@ class Database {
             },
           },
           data: {
-            bestScore: numericScore, // Поле в моделі 'bestScore'
-            lastPlayed: new Date(), // Оновлюємо час гри
+            bestScore: numericScore,
+            lastPlayed: new Date(),
           },
         });
       } else if (!existingRecord) {
         // Створюємо, якщо запис не існує
-        // ВИПРАВЛЕНО: 'prisma.score'
         return await prisma.score.create({
           data: {
             userId: playerId,
             difficulty,
-            bestScore: numericScore, // Поле в моделі 'bestScore'
+            bestScore: numericScore,
             lastPlayed: new Date(),
           },
         });
       } else {
         // Якщо результат не кращий, оновлюємо лише час останньої гри
-        // ВИПРАВЛЕНО: 'prisma.score'
         return await prisma.score.update({
           where: {
             userId_difficulty: {

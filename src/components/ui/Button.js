@@ -1,11 +1,9 @@
 // components/UI/Button.jsx
 import React from "react";
 
-// Оновлено базові стилі: змінено колір рамки для світлої/темної теми
 const base =
   "flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold active:scale-95 transition-all duration-200 shadow-lg border border-black/10 dark:border-white/10 backdrop-blur-sm hover:shadow-[0_0_8px_var(--glow)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
 
-// Оновлено варіанти: додано прозорість та стилі для темної теми (dark:)
 const variants = {
   green:
     "bg-green-500/80 hover:bg-green-500 text-white dark:bg-green-600/50 dark:hover:bg-green-500/60 dark:text-green-100 [--glow:rgba(34,197,94,0.5)] dark:[--glow:rgba(34,197,94,0.7)]",

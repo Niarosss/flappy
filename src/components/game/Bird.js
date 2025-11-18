@@ -10,7 +10,7 @@ const BIRD_OUTLINE_COLOR = "#4A4A4A";
 const BEAK_COLOR = "#F29E4C";
 const PAW_COLOR = "#E67E22";
 
-const Bird = forwardRef(({ birdStatus }, ref) => {
+const Bird = forwardRef(function Bird({ birdStatus, leftPosition }, ref) {
   const FlapAnimationStyles = (
     <style>
       {`
@@ -35,7 +35,7 @@ const Bird = forwardRef(({ birdStatus }, ref) => {
       style={{
         width: BIRD_SIZE_W,
         height: BIRD_SIZE_H,
-        left: 50,
+        left: `${leftPosition}px`,
       }}
     >
       {FlapAnimationStyles}

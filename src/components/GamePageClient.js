@@ -5,8 +5,8 @@ import { useGameStatus } from "@/context/GameStatusContext";
 import { useKeybinding } from "@/hooks/useKeybinding";
 import { useTranslations } from "next-intl";
 
-import Bird from "./Bird";
-import Pipe from "./Pipe";
+import Bird from "./game/Bird";
+import Pipe from "./game/Pipe";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 
@@ -21,8 +21,6 @@ import {
 
 const BIRD_SIZE_W = 38;
 const BIRD_SIZE_H = 28;
-const BIRD_LEFT_POSITION = 50;
-const PIPE_WIDTH = 52;
 
 const Game = ({ player, onGameOver }) => {
   const t = useTranslations("GamePage");
@@ -50,6 +48,10 @@ const Game = ({ player, onGameOver }) => {
   const [showDifficultyModal, setShowDifficultyModal] = useState(true);
   const [isPausedUI, setIsPausedUI] = useState(false);
   const [countdown, setCountdown] = useState(0);
+
+  const isMobile = gameDimensions.width < 768;
+  const BIRD_LEFT_POSITION = isMobile ? 10 : 60;
+  const PIPE_WIDTH = isMobile ? 32 : 52;
 
   const birdVelocity = useRef(0);
   const gameLoopRef = useRef(null);
@@ -96,22 +98,22 @@ const Game = ({ player, onGameOver }) => {
       gravity: 0.6,
       jump: -8,
       pipeSpeed: 7,
-      pipeInterval: 2000,
-      pipeGap: 150,
+      pipeInterval: 1800,
+      pipeGap: 140,
     },
     medium: {
       gravity: 0.7,
       jump: -9,
       pipeSpeed: 8,
       pipeInterval: 1600,
-      pipeGap: 140,
+      pipeGap: 130,
     },
     hard: {
       gravity: 0.8,
       jump: -10,
       pipeSpeed: 9,
       pipeInterval: 1400,
-      pipeGap: 130,
+      pipeGap: 120,
     },
   };
 
@@ -574,11 +576,18 @@ const Game = ({ player, onGameOver }) => {
               key={pipe.id}
               pipeData={pipe}
               gameHeight={GAME_HEIGHT}
+              pipeWidth={PIPE_WIDTH}
               ref={refs}
             />
           );
         })}
-        {gameStarted && <Bird ref={birdDomRef} birdStatus={birdStatus} />}
+        {gameStarted && (
+          <Bird
+            ref={birdDomRef}
+            birdStatus={birdStatus}
+            leftPosition={BIRD_LEFT_POSITION}
+          />
+        )}
       </div>
 
       {/* === Модалка зворотного відліку === */}

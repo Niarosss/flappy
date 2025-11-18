@@ -1,4 +1,4 @@
-import Settings from "@/components/Settings";
+import Settings from "@/components/SettingsPageClient";
 import BackButton from "@/components/ui/BackButton";
 
 export default async function LeadersPage() {
