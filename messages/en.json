@@ -18,7 +18,10 @@
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "sound": "Sound",
+    "soundOn": "On",
+    "soundOff": "Off"
   },
   "Controls": {
     "back": "Back"

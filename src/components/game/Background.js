@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "motion/react";
-import { useGameStatus } from "@/context/GameStatusContext";
+import { useGame } from "@/context/GameContext";
 
 const COLORS = {
   light: {
@@ -49,7 +49,7 @@ function interpolateColor(a, b, t) {
 }
 
 export default function Background() {
-  const { isGameActive } = useGameStatus();
+  const { isGameActive } = useGame();
   const { resolvedTheme } = useTheme();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [mounted, setMounted] = useState(false);

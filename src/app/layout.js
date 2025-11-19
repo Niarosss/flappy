@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "next-auth/react";
-import { GameStatusProvider } from "@/context/GameStatusContext";
+import { GameProvider } from "@/context/GameContext";
 import Background from "@/components/game/Background";
 import "./globals.css";
 
@@ -31,12 +31,12 @@ export default async function RootLayout({ children }) {
     <html lang={locale} suppressHydrationWarning>
       <body className={nunito.className}>
         <NextIntlClientProvider>
-          <GameStatusProvider>
+          <GameProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <Background />
               <SessionProvider>{children}</SessionProvider>
             </ThemeProvider>
-          </GameStatusProvider>
+          </GameProvider>
         </NextIntlClientProvider>
       </body>
     </html>

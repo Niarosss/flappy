@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, createRef } from "react";
 import { useRouter } from "next/navigation";
-import { useGameStatus } from "@/context/GameStatusContext";
+import { useGame } from "@/context/GameContext";
 import { useKeybinding } from "@/hooks/useKeybinding";
 import { useTranslations } from "next-intl";
 
@@ -26,7 +26,7 @@ const Game = ({ player, onGameOver }) => {
   const t = useTranslations("GamePage");
   const router = useRouter();
   const gameContainerRef = useRef(null);
-  const { setIsGameActive } = useGameStatus();
+  const { soundsEnabled, setIsGameActive } = useGame();
 
   // --- Стан гри (тільки для UI/рендерингу) ---
   const [gameStarted, setGameStarted] = useState(false);
@@ -52,6 +52,8 @@ const Game = ({ player, onGameOver }) => {
   const isMobile = gameDimensions.width < 768;
   const BIRD_LEFT_POSITION = isMobile ? 10 : 60;
   const PIPE_WIDTH = isMobile ? 32 : 52;
+
+  const speedModifier = isMobile ? 0.7 : 1.0;
 
   const birdVelocity = useRef(0);
   const gameLoopRef = useRef(null);
@@ -97,21 +99,21 @@ const Game = ({ player, onGameOver }) => {
     easy: {
       gravity: 0.6,
       jump: -8,
-      pipeSpeed: 7,
+      pipeSpeed: 7 * speedModifier,
       pipeInterval: 1800,
       pipeGap: 140,
     },
     medium: {
       gravity: 0.7,
       jump: -9,
-      pipeSpeed: 8,
+      pipeSpeed: 8 * speedModifier,
       pipeInterval: 1600,
       pipeGap: 130,
     },
     hard: {
       gravity: 0.8,
       jump: -10,
-      pipeSpeed: 9,
+      pipeSpeed: 9 * speedModifier,
       pipeInterval: 1400,
       pipeGap: 120,
     },
@@ -162,6 +164,19 @@ const Game = ({ player, onGameOver }) => {
     setBestScore(allBestScores[difficulty] || 0);
   }, [difficulty, allBestScores]);
 
+  const playSound = useCallback(
+    (src) => {
+      if (!soundsEnabled) return;
+      try {
+        const audio = new Audio(src);
+        audio.play().catch((e) => console.error("Audio play failed:", e));
+      } catch (e) {
+        console.error("Audio creation failed:", e);
+      }
+    },
+    [soundsEnabled]
+  );
+
   const checkCollision = (birdY, currentPipes) => {
     const birdRect = {
       x: BIRD_LEFT_POSITION,
@@ -200,6 +215,7 @@ const Game = ({ player, onGameOver }) => {
 
   const endGame = useCallback(() => {
     if (gameLoopRef.current === null) return;
+    playSound("/sounds/hit.mp3");
     cancelAnimationFrame(gameLoopRef.current);
     gameLoopRef.current = null;
     setGameOver(true);
@@ -303,6 +319,7 @@ const Game = ({ player, onGameOver }) => {
     });
 
     if (scoreIncrement > 0) {
+      playSound("/sounds/point.mp3");
       setScore((s) => s + scoreIncrement);
     }
 

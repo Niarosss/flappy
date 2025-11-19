@@ -18,7 +18,10 @@
     "theme": "Тема",
     "themeLight": "Світла",
     "themeDark": "Темна",
-    "themeSystem": "Системна"
+    "themeSystem": "Системна",
+    "sound": "Звук",
+    "soundOn": "Увімк.",
+    "soundOff": "Вимк."
   },
   "Controls": {
     "back": "Назад"

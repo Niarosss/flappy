@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import Modal from "@/components/ui/Modal";
 import LangSwitcher from "@/components/ui/LangSwitcher";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
+import SoundSwitcher from "@/components/ui/SoundSwitcher";
 
 export default function Settings() {
   const t = useTranslations("SettingsPage");
@@ -21,6 +22,11 @@ export default function Settings() {
 
       <div className="mt-4">
         <ThemeSwitcher />
+      </div>
+      <div className="border-t border-white/20 my-6"></div>
+
+      <div className="mt-4">
+        <SoundSwitcher />
       </div>
     </Modal>
   );
