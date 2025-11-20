@@ -2,7 +2,6 @@
   "HomePage": {
     "welcome": "Welcome!",
     "welcomeBack": "Welcome back!",
-    "startNew": "Start new game",
     "start": "Start game",
     "leader": "Leaderboard",
     "logout": "Log Out",
@@ -37,10 +36,6 @@
     "loading": "Loading leaderboard...",
     "noScores": "No scores yet for {selectedDifficulty} difficulty.",
     "motivation": "Be the first to play and set a record!",
-    "createTestData": "Create Test Data",
-    "debug": "Debug",
-    "clear": "Clear",
-    "debugInfo": "Debug Info (Click to expand)",
     "rank": "Rank"
   },
   "GamePage": {
