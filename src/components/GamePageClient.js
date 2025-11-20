@@ -1,15 +1,17 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, createRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useGame } from "@/context/GameContext";
-import { useKeybinding } from "@/hooks/useKeybinding";
 import { useTranslations } from "next-intl";
+import { useGameAudio } from "@/hooks/useGameAudio";
+import { useGameLoop } from "@/hooks/useGameLoop";
+import { useGameKeybindings } from "@/hooks/useGameKeybindings";
+import { useDifficultySettings } from "@/hooks/useDifficultySettings";
+import { useTheme } from "next-themes";
 
 import Bird from "./game/Bird";
-import Pipe from "./game/Pipe";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
-
 import {
   PauseIcon,
   PlayIcon,
@@ -19,19 +21,17 @@ import {
   ArrowsCounterClockwiseIcon,
 } from "@phosphor-icons/react";
 
-const BIRD_SIZE_W = 38;
-const BIRD_SIZE_H = 28;
-
-const Game = ({ player, onGameOver }) => {
+const Game = ({ player, onGameOver: onGameOverProp }) => {
   const t = useTranslations("GamePage");
   const router = useRouter();
   const gameContainerRef = useRef(null);
   const { soundsEnabled, setIsGameActive } = useGame();
+  const { playSound } = useGameAudio({ soundsEnabled });
+  const { resolvedTheme } = useTheme();
 
-  // --- Стан гри (тільки для UI/рендерингу) ---
-  const [gameStarted, setGameStarted] = useState(false);
+  const [uiState, setUiState] = useState("difficulty"); // 'difficulty', 'ready', 'playing', 'paused', 'gameOver', 'countdown'
+  const [birdStatus, setBirdStatus] = useState("playing");
   const [score, setScore] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
   const [bestScore, setBestScore] = useState(0);
   const [allBestScores, setAllBestScores] = useState({
     easy: 0,
@@ -43,105 +43,82 @@ const Game = ({ player, onGameOver }) => {
     width: 400,
     height: 600,
   });
-  const [pipes, setPipes] = useState([]);
-  const [birdStatus, setBirdStatus] = useState("playing");
-  const [showDifficultyModal, setShowDifficultyModal] = useState(true);
-  const [isPausedUI, setIsPausedUI] = useState(false);
   const [countdown, setCountdown] = useState(0);
+
+  const scoreUIRef = useRef(null);
+  const gameActiveRef = useRef(false);
 
   const isMobile = gameDimensions.width < 768;
   const BIRD_LEFT_POSITION = isMobile ? 10 : 60;
   const PIPE_WIDTH = isMobile ? 32 : 52;
 
-  const speedModifier = isMobile ? 0.7 : 1.0;
+  const settings = useDifficultySettings(difficulty, isMobile);
 
-  const birdVelocity = useRef(0);
-  const gameLoopRef = useRef(null);
-  const lastPipeTime = useRef(0);
-  const pipesRef = useRef([]);
-  const scoreUpdatedForPipes = useRef(new Set());
-  const scoreRef = useRef(0);
-  const birdY = useRef(280);
-  const birdDomRef = useRef(null);
-  const pipeDomRefs = useRef(new Map());
-  const countdownTimerRef = useRef(null);
-  const isPausedRef = useRef(false);
-  const lastFrameTime = useRef(performance.now());
+  const onScoreUpdate = useCallback(
+    (newScore) => {
+      setScore(newScore);
+      if (scoreUIRef.current) {
+        scoreUIRef.current.textContent = newScore;
+      }
+    },
+    [scoreUIRef]
+  );
 
-  const GAME_WIDTH = gameDimensions.width;
-  const GAME_HEIGHT = gameDimensions.height;
+  const onGameOver = useCallback(
+    (finalScore) => {
+      if (!gameActiveRef.current) return;
+      gameActiveRef.current = false;
+      playSound("hit");
+      setBirdStatus("gameover");
+      setScore(finalScore);
+      setUiState("gameOver");
+      setIsGameActive(false);
+      if (onGameOverProp && finalScore > 0)
+        onGameOverProp(finalScore, difficulty);
+    },
+    [playSound, setIsGameActive, onGameOverProp, difficulty]
+  );
+
+  const {
+    gameSceneRef,
+    birdDomRef,
+    startGame,
+    stopGameLoop,
+    resumeGameLoop,
+    restartGame,
+    jump,
+    triggerCountdown,
+  } = useGameLoop({
+    gameDimensions,
+    difficultySettings: settings,
+    birdLeftPosition: BIRD_LEFT_POSITION,
+    pipeWidth: PIPE_WIDTH,
+    onScoreUpdate,
+    onGameOver,
+    playSound,
+    resolvedTheme,
+    onCountdownUpdate: setCountdown,
+  });
 
   useEffect(() => {
     const updateDimensions = () => {
-      const container = gameContainerRef.current;
-      if (container) {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-
+      if (gameContainerRef.current) {
         setGameDimensions({
-          width: windowWidth,
-          height: windowHeight,
+          width: window.innerWidth,
+          height: window.innerHeight,
         });
-
-        birdY.current = Math.min(windowHeight, 700) / 2 - BIRD_SIZE_H / 2;
       }
     };
-
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
-
-    return () => {
-      window.removeEventListener("resize", updateDimensions);
-    };
+    return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
-  const difficultySettings = {
-    easy: {
-      gravity: 0.6,
-      jump: -8,
-      pipeSpeed: 7 * speedModifier,
-      pipeInterval: 1800,
-      pipeGap: 140,
-    },
-    medium: {
-      gravity: 0.7,
-      jump: -9,
-      pipeSpeed: 8 * speedModifier,
-      pipeInterval: 1600,
-      pipeGap: 130,
-    },
-    hard: {
-      gravity: 0.8,
-      jump: -10,
-      pipeSpeed: 9 * speedModifier,
-      pipeInterval: 1400,
-      pipeGap: 120,
-    },
-  };
-
-  useEffect(() => {
-    scoreRef.current = score;
-
-    if (score > bestScore) {
-      setBestScore(score);
-    }
-  }, [score, bestScore]);
-
-  // Завантажуємо всі найкращі результати один раз
   const loadAllBestScores = useCallback(async () => {
-    if (!player?.id) {
-      setAllBestScores({ easy: 0, medium: 0, hard: 0 });
-      return;
-    }
+    if (!player?.id) return;
     try {
       const response = await fetch(`/api/scores/?playerId=${player.id}`);
-      if (!response.ok) {
-        if (response.status === 404 || response.status === 204) {
-          setAllBestScores({ easy: 0, medium: 0, hard: 0 });
-          return;
-        }
-        throw new Error(`Server error: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setAllBestScores({
         easy: data.easy || 0,
@@ -149,402 +126,98 @@ const Game = ({ player, onGameOver }) => {
         hard: data.hard || 0,
       });
     } catch (error) {
-      console.error("Error loading all best scores:", error);
-      setAllBestScores({ easy: 0, medium: 0, hard: 0 });
+      console.error("Error loading scores:", error);
     }
   }, [player]);
 
-  // Завантажуємо результати при монтуванні компонента
   useEffect(() => {
     loadAllBestScores();
   }, [loadAllBestScores]);
-
-  // Оновлюємо відображуваний рекорд при зміні складності або завантаженні даних
   useEffect(() => {
     setBestScore(allBestScores[difficulty] || 0);
-  }, [difficulty, allBestScores]);
+    if (score > allBestScores[difficulty]) setBestScore(score);
+  }, [difficulty, allBestScores, score]);
 
-  const playSound = useCallback(
-    (src) => {
-      if (!soundsEnabled) return;
-      try {
-        const audio = new Audio(src);
-        audio.play().catch((e) => console.error("Audio play failed:", e));
-      } catch (e) {
-        console.error("Audio creation failed:", e);
-      }
-    },
-    [soundsEnabled]
-  );
-
-  const checkCollision = (birdY, currentPipes) => {
-    const birdRect = {
-      x: BIRD_LEFT_POSITION,
-      y: birdY,
-      width: BIRD_SIZE_W,
-      height: BIRD_SIZE_H,
-    };
-    for (const pipe of currentPipes) {
-      const pipeTopRect = {
-        x: pipe.x,
-        y: 0,
-        width: PIPE_WIDTH,
-        height: pipe.topHeight,
-      };
-      const pipeBottomRect = {
-        x: pipe.x,
-        y: pipe.topHeight + pipe.gap,
-        width: PIPE_WIDTH,
-        height: GAME_HEIGHT - (pipe.topHeight + pipe.gap),
-      };
-      if (
-        (birdRect.x < pipeTopRect.x + pipeTopRect.width &&
-          birdRect.x + birdRect.width > pipeTopRect.x &&
-          birdRect.y < pipeTopRect.y + pipeTopRect.height &&
-          birdRect.y + birdRect.height > pipeTopRect.y) ||
-        (birdRect.x < pipeBottomRect.x + pipeBottomRect.width &&
-          birdRect.x + birdRect.width > pipeBottomRect.x &&
-          birdRect.y < pipeBottomRect.y + pipeBottomRect.height &&
-          birdRect.y + birdRect.height > pipeBottomRect.y)
-      ) {
-        return true;
-      }
-    }
-    return false;
+  const handleStartGame = () => {
+    setUiState("ready");
   };
 
-  const endGame = useCallback(() => {
-    if (gameLoopRef.current === null) return;
-    playSound("/sounds/hit.mp3");
-    cancelAnimationFrame(gameLoopRef.current);
-    gameLoopRef.current = null;
-    setGameOver(true);
-    setBirdStatus("gameover");
-    isPausedRef.current = false;
-    setIsPausedUI(false);
+  const handleJump = useCallback(() => {
+    if (uiState !== "playing" && uiState !== "ready") return;
 
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-      setCountdown(0);
-    }
-    setIsGameActive(false);
-
-    if (onGameOver && scoreRef.current > 0) {
-      onGameOver(scoreRef.current, difficulty);
+    if (uiState === "ready") {
+      setUiState("playing");
     }
 
-    scoreUpdatedForPipes.current.clear();
-  }, [onGameOver, difficulty, setIsGameActive]);
-
-  const gameLoop = useCallback(() => {
-    if (gameLoopRef.current === null || isPausedRef.current || countdown > 0)
-      return;
-
-    const settings = difficultySettings[difficulty];
-    const now = performance.now();
-    // Використовуємо Math.min для стабільності
-    const deltaTime = Math.min((now - lastFrameTime.current) / (1000 / 60), 3);
-    lastFrameTime.current = now;
-
-    let currentPipes = pipesRef.current;
-    let pipesAddedOrRemoved = false;
-
-    // Гравітація та рух труб ЗАЛЕЖАТЬ від deltaTime
-    birdVelocity.current += settings.gravity * deltaTime;
-    let newY = birdY.current + birdVelocity.current * deltaTime;
-    const newRotation = Math.min(Math.max(-30, birdVelocity.current * 6), 90);
-
-    if (newY > GAME_HEIGHT - BIRD_SIZE_H || newY < 0) {
-      endGame();
-      newY = Math.max(0, Math.min(newY, GAME_HEIGHT - BIRD_SIZE_H));
-      birdY.current = newY;
-      return;
+    if (!gameActiveRef.current) {
+      setIsGameActive(true);
+      startGame();
+      gameActiveRef.current = true;
     }
-    birdY.current = newY;
-
-    if (birdDomRef.current) {
-      birdDomRef.current.style.transform = `translateY(${birdY.current}px) rotate(${newRotation}deg)`;
-    }
-
-    let updatedPipes = currentPipes
-      .map((pipe) => {
-        // Застосовуємо deltaTime до руху труб
-        const newX = pipe.x - settings.pipeSpeed * deltaTime;
-        const pipeRefs = pipeDomRefs.current.get(pipe.id);
-
-        if (pipeRefs?.top.current && pipeRefs?.bottom.current) {
-          const transformValue = `translateX(${newX}px)`;
-          pipeRefs.top.current.style.transform = transformValue;
-          pipeRefs.bottom.current.style.transform = transformValue;
-        }
-        return { ...pipe, x: newX };
-      })
-      .filter((pipe) => {
-        const shouldKeep = pipe.x > -PIPE_WIDTH;
-        if (!shouldKeep) {
-          pipeDomRefs.current.delete(pipe.id);
-          pipesAddedOrRemoved = true;
-        }
-        return shouldKeep;
-      });
-
-    if (now - lastPipeTime.current >= settings.pipeInterval) {
-      lastPipeTime.current = now;
-      const minTopHeight = 50;
-      const maxTopHeight = GAME_HEIGHT - settings.pipeGap - 50;
-      const topHeight =
-        Math.random() * (maxTopHeight - minTopHeight) + minTopHeight;
-
-      const newPipe = {
-        id: `pipe-${now}-${Math.random()}`,
-        x: GAME_WIDTH,
-        topHeight,
-        gap: settings.pipeGap,
-        passed: false,
-      };
-      updatedPipes = [...updatedPipes, newPipe];
-      pipesAddedOrRemoved = true;
-    }
-
-    let scoreIncrement = 0;
-    updatedPipes.forEach((pipe) => {
-      if (!pipe.passed && pipe.x + PIPE_WIDTH < BIRD_LEFT_POSITION) {
-        pipe.passed = true;
-        if (!scoreUpdatedForPipes.current.has(pipe.id)) {
-          scoreUpdatedForPipes.current.add(pipe.id);
-          scoreIncrement += 1;
-        }
-      }
-    });
-
-    if (scoreIncrement > 0) {
-      playSound("/sounds/point.mp3");
-      setScore((s) => s + scoreIncrement);
-    }
-
-    pipesRef.current = updatedPipes;
-
-    if (checkCollision(birdY.current, pipesRef.current)) {
-      endGame();
-      return;
-    }
-
-    if (pipesAddedOrRemoved) {
-      setPipes(pipesRef.current);
-    }
-
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [difficulty, endGame, GAME_WIDTH, GAME_HEIGHT, countdown]);
+    jump();
+  }, [uiState, jump, startGame, setIsGameActive]);
 
   const handlePause = useCallback(() => {
-    if (gameOver || !gameStarted || isPausedRef.current) return;
-
-    isPausedRef.current = true;
-    setIsPausedUI(true);
+    if (uiState !== "playing") return;
+    stopGameLoop();
+    setUiState("paused");
     setIsGameActive(false);
-
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
-      gameLoopRef.current = null;
-    }
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-      setCountdown(0);
-    }
-    // Зберігаємо результат під час паузи
-    if (onGameOver && scoreRef.current > 0) {
-      onGameOver(scoreRef.current, difficulty);
-    }
-  }, [gameOver, gameStarted, onGameOver, difficulty, setIsGameActive]);
+    if (onGameOverProp && score > 0) onGameOverProp(score, difficulty);
+  }, [
+    uiState,
+    score,
+    difficulty,
+    stopGameLoop,
+    setIsGameActive,
+    onGameOverProp,
+  ]);
 
   const handleResumeGame = useCallback(() => {
-    if (gameOver) return;
+    if (uiState !== "paused") return;
+    setUiState("countdown");
+    triggerCountdown(3);
+  }, [uiState, triggerCountdown]);
 
-    setIsPausedUI(false);
-    setCountdown(3);
-
-    let currentCount = 3;
-    const startCountdown = () => {
-      if (currentCount > 0) {
-        setCountdown(currentCount);
-        currentCount -= 1;
-        countdownTimerRef.current = setTimeout(startCountdown, 1000);
-      } else {
-        setCountdown(0);
-        setIsGameActive(true);
-        isPausedRef.current = false;
-
-        setTimeout(() => {
-          lastFrameTime.current = performance.now(); // Скидаємо час тут
-          lastPipeTime.current = performance.now();
-          if (gameLoopRef.current) {
-            cancelAnimationFrame(gameLoopRef.current);
-          }
-          gameLoopRef.current = requestAnimationFrame(gameLoop);
-        }, 0);
-      }
-    };
-    startCountdown();
-  }, [gameOver, gameLoop, setIsGameActive]);
-
-  const handleJump = useCallback(() => {
-    if (showDifficultyModal || isPausedRef.current || gameOver || countdown > 0)
-      return;
-
-    if (!gameStarted) {
-      setGameStarted(true);
-      setShowDifficultyModal(false);
+  useEffect(() => {
+    if (uiState === "countdown" && countdown <= 0) {
+      setUiState("playing");
       setIsGameActive(true);
-
-      const settings = difficultySettings[difficulty];
-      lastFrameTime.current = performance.now(); // І скидаємо час тут
-      lastPipeTime.current = performance.now() - settings.pipeInterval;
-
-      birdVelocity.current = difficultySettings[difficulty].jump; // <-- Без deltaTime
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      birdVelocity.current = difficultySettings[difficulty].jump; // <-- Без deltaTime
     }
-  }, [
-    showDifficultyModal,
-    gameOver,
-    countdown,
-    gameStarted,
-    difficulty,
-    gameLoop,
-  ]);
+  }, [countdown, uiState, setIsGameActive]);
+
+  const handleRestart = useCallback(() => {
+    restartGame();
+    gameActiveRef.current = false;
+    onScoreUpdate(0);
+    if (scoreUIRef.current) scoreUIRef.current.textContent = "0";
+    setBirdStatus("playing");
+    setUiState("difficulty");
+    setIsGameActive(false);
+    loadAllBestScores();
+  }, [restartGame, onScoreUpdate, setIsGameActive, loadAllBestScores]);
+
+  const handleExitToMenu = useCallback(async () => {
+    stopGameLoop();
+    gameActiveRef.current = false;
+    if (onGameOverProp && score > 0) await onGameOverProp(score, difficulty);
+    router.push("/");
+  }, [stopGameLoop, onGameOverProp, score, difficulty, router]);
 
   const handleSelectDifficulty = (level) => {
     setDifficulty(level);
   };
 
-  const handleStartGameFromModal = () => {
-    setShowDifficultyModal(false);
-    handleJump();
-  };
-
-  const handleRestart = () => {
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
-    }
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-    }
-
-    birdY.current = GAME_HEIGHT / 2 - BIRD_SIZE_H / 2;
-    birdVelocity.current = 0;
-    pipesRef.current = [];
-    pipeDomRefs.current.clear();
-
-    setPipes([]);
-    setScore(0);
-    setGameOver(false);
-    setGameStarted(false);
-    setBirdStatus("playing");
-    gameLoopRef.current = null;
-    lastPipeTime.current = 0;
-    scoreUpdatedForPipes.current.clear();
-
-    loadAllBestScores();
-    setShowDifficultyModal(true);
-    isPausedRef.current = false;
-    setIsPausedUI(false);
-    setCountdown(0);
-
-    setIsGameActive(false);
-  };
-
-  const handleExitToMenu = async () => {
-    if (onGameOver && score > 0) {
-      await onGameOver(score, difficulty);
-    }
-
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
-    }
-    if (countdownTimerRef.current) {
-      clearTimeout(countdownTimerRef.current);
-    }
-    router.push("/");
-  };
-
-  // 1. Керування для старту та самої гри (стрибок, пауза)
-  useKeybinding([" ", "w", "W", "Enter", "ц", "Ц"], handleJump, {
-    active:
-      !isPausedRef.current &&
-      !gameOver &&
-      !showDifficultyModal &&
-      countdown === 0,
+  useGameKeybindings({
+    uiState,
+    onJump: handleJump,
+    onPause: handlePause,
+    onResume: handleResumeGame,
+    onRestart: handleRestart,
+    onExit: handleExitToMenu,
+    difficulty,
+    setDifficulty,
+    onStartGame: handleStartGame,
   });
-
-  useKeybinding("Escape", handlePause, {
-    active:
-      gameStarted &&
-      !isPausedRef.current &&
-      !gameOver &&
-      !showDifficultyModal &&
-      countdown === 0,
-  });
-
-  // 2. Керування у модальному вікні ПАУЗИ
-  useKeybinding(["Enter", " "], handleResumeGame, {
-    active: isPausedUI && gameStarted && !gameOver,
-  });
-
-  useKeybinding("Escape", handleExitToMenu, {
-    active: isPausedUI && gameStarted && !gameOver,
-  });
-
-  // 3. Керування у модальному вікні вибору складності
-  const difficulties = ["easy", "medium", "hard"];
-  const currentDifficultyIndex = difficulties.indexOf(difficulty);
-
-  useKeybinding(
-    ["ArrowDown", "s", "S", "і", "І"],
-    () => {
-      const nextIndex = (currentDifficultyIndex + 1) % difficulties.length;
-      handleSelectDifficulty(difficulties[nextIndex]);
-    },
-    { active: showDifficultyModal }
-  );
-
-  useKeybinding(
-    ["ArrowUp", "w", "W", "ц", "Ц"],
-    () => {
-      const prevIndex =
-        (currentDifficultyIndex - 1 + difficulties.length) %
-        difficulties.length;
-      handleSelectDifficulty(difficulties[prevIndex]);
-    },
-    { active: showDifficultyModal }
-  );
-
-  useKeybinding(["Enter", " ", "e", "E", "у", "У"], handleStartGameFromModal, {
-    active: showDifficultyModal,
-  });
-
-  useKeybinding("Escape", () => router.push("/"), {
-    active: showDifficultyModal,
-  });
-
-  // 4. Керування у модальному вікні "Game Over"
-  useKeybinding(["Enter", " ", "e", "E", "у", "У"], handleRestart, {
-    active: gameOver,
-  });
-
-  useKeybinding("Escape", handleExitToMenu, { active: gameOver });
-
-  useEffect(() => {
-    return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-      if (countdownTimerRef.current) {
-        clearTimeout(countdownTimerRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div
@@ -552,14 +225,17 @@ const Game = ({ player, onGameOver }) => {
       className="w-screen h-screen select-none overflow-hidden"
     >
       {/* === Фіксована панель інформації === */}
-      {gameStarted && !gameOver && !isPausedUI && (
+      {uiState === "playing" && (
         <div className="absolute md:top-6 md:left-6 top-2 left-2 z-30 flex flex-col gap-1 backdrop-blur-sm p-4 rounded-xl bg-neutral-100/20 dark:bg-neutral-600/20 border border-neutral-50/20 dark:border-neutral-600/20">
           <div
             className=" text-xl text-center"
             style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.5)" }}
           >
-            <span className="font-bold text-neutral-700 dark:text-neutral-300">
-              {score}
+            <span
+              ref={scoreUIRef}
+              className="font-bold text-neutral-700 dark:text-neutral-300"
+            >
+              0
             </span>
             <span className="text-neutral-300"> | </span>
             <span className="text-green-600 font-bold">{bestScore}</span>
@@ -576,29 +252,15 @@ const Game = ({ player, onGameOver }) => {
 
       {/* === Ігрове поле === */}
       <div
+        ref={gameSceneRef}
         className="relative cursor-pointer overflow-hidden"
-        style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
+        style={{ width: gameDimensions.width, height: gameDimensions.height }}
         onClick={handleJump}
       >
-        {pipes.map((pipe) => {
-          if (!pipeDomRefs.current.has(pipe.id)) {
-            pipeDomRefs.current.set(pipe.id, {
-              top: createRef(),
-              bottom: createRef(),
-            });
-          }
-          const refs = pipeDomRefs.current.get(pipe.id);
-          return (
-            <Pipe
-              key={pipe.id}
-              pipeData={pipe}
-              gameHeight={GAME_HEIGHT}
-              pipeWidth={PIPE_WIDTH}
-              ref={refs}
-            />
-          );
-        })}
-        {gameStarted && (
+        {(uiState === "playing" ||
+          uiState === "paused" ||
+          uiState === "gameOver" ||
+          uiState === "countdown") && (
           <Bird
             ref={birdDomRef}
             birdStatus={birdStatus}
@@ -608,7 +270,7 @@ const Game = ({ player, onGameOver }) => {
       </div>
 
       {/* === Модалка зворотного відліку === */}
-      {countdown > 0 && (
+      {countdown > 0 && uiState === "countdown" && (
         <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
           <span className="text-7xl font-bold text-white animate-pulse text-shadow-sm">
             {countdown}
@@ -617,7 +279,7 @@ const Game = ({ player, onGameOver }) => {
       )}
 
       {/* === Модалка паузи === */}
-      {isPausedUI && gameStarted && !gameOver && countdown === 0 && (
+      {uiState === "paused" && (
         <Modal className="max-w-md text-center">
           <div className="flex flex-col items-center justify-center gap-1 mb-10">
             <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 my-6 uppercase">
@@ -646,7 +308,7 @@ const Game = ({ player, onGameOver }) => {
       )}
 
       {/* === Модалка вибору складності === */}
-      {showDifficultyModal && !gameStarted && !gameOver && (
+      {uiState === "difficulty" && (
         <Modal className="max-w-md text-center">
           <h2 className="text-4xl font-bold my-6">{t("selectDifficulty")}</h2>
           <div className="flex flex-col gap-3">
@@ -674,7 +336,7 @@ const Game = ({ player, onGameOver }) => {
             </Button>
             <Button
               variant="blue"
-              onClick={handleStartGameFromModal}
+              onClick={handleStartGame}
               className="animate-pulse w-full"
             >
               <PlayIcon size={24} weight="duotone" />
@@ -685,7 +347,7 @@ const Game = ({ player, onGameOver }) => {
       )}
 
       {/* === Повідомлення "Click to jump..." === */}
-      {!gameStarted && !gameOver && !showDifficultyModal && (
+      {uiState === "ready" && (
         <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
           <p
             className="text-3xl font-extrabold text-white animate-pulse text-center p-4"
@@ -697,7 +359,7 @@ const Game = ({ player, onGameOver }) => {
       )}
 
       {/* === Модалка Game Over === */}
-      {gameOver && (
+      {uiState === "gameOver" && (
         <Modal className="max-w-md text-center">
           <h2 className="text-4xl font-bold text-red-500/80 dark:text-red-500 my-10">
             {t("gameOver")}

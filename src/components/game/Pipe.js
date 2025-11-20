@@ -1,7 +1,6 @@
 "use client";
 
-import React, { forwardRef } from "react";
-import { useTheme } from "next-themes";
+import React from "react";
 
 const THEMES = {
   light: {
@@ -16,19 +15,14 @@ const THEMES = {
   },
 };
 
-const Pipe = forwardRef(function Pipe(
-  { pipeData, gameHeight, pipeWidth },
-  ref
-) {
+const Pipe = ({ pipeData, gameHeight, pipeWidth, theme }) => {
   const FLANGE_WIDTH = pipeWidth + 13;
   const FLANGE_HEIGHT = 30;
 
   const { x, topHeight, gap } = pipeData;
-  const topPipeRef = ref.top;
-  const bottomPipeRef = ref.bottom;
-  const { resolvedTheme } = useTheme();
-  const theme = resolvedTheme || "light";
-  const colors = THEMES[theme];
+
+  const currentTheme = theme === "dark" ? "dark" : "light";
+  const colors = THEMES[currentTheme];
 
   const transformStyle = `translateX(${x}px)`;
   const flangeLeftOffset = (pipeWidth - FLANGE_WIDTH) / 1.6;
@@ -37,14 +31,16 @@ const Pipe = forwardRef(function Pipe(
     <div
       style={{
         position: "absolute",
+        left: 0,
         top: 0,
-        height: gameHeight,
         width: pipeWidth,
+        height: gameHeight,
+        transform: transformStyle,
+        zIndex: 10,
       }}
     >
       {/* Верхня труба */}
       <div
-        ref={topPipeRef}
         style={{
           position: "absolute",
           top: 0,
@@ -54,8 +50,6 @@ const Pipe = forwardRef(function Pipe(
           borderLeft: `2px solid ${colors.border}`,
           borderRight: `2px solid ${colors.border}`,
           borderBottom: "none",
-          zIndex: 10,
-          transform: transformStyle,
           backgroundImage: `linear-gradient(to right, ${colors.pipe} 85%, ${colors.shadow} 100%)`,
         }}
       >
@@ -79,7 +73,6 @@ const Pipe = forwardRef(function Pipe(
 
       {/* Нижня труба */}
       <div
-        ref={bottomPipeRef}
         style={{
           position: "absolute",
           top: topHeight + gap,
@@ -89,8 +82,6 @@ const Pipe = forwardRef(function Pipe(
           borderLeft: `2px solid ${colors.border}`,
           borderRight: `2px solid ${colors.border}`,
           borderTop: "none",
-          zIndex: 10,
-          transform: transformStyle,
           backgroundImage: `linear-gradient(to right, ${colors.pipe} 85%, ${colors.shadow} 100%)`,
         }}
       >
@@ -113,7 +104,7 @@ const Pipe = forwardRef(function Pipe(
       </div>
     </div>
   );
-});
+};
 
 Pipe.displayName = "Pipe";
 export default Pipe;

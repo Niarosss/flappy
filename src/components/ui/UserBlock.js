@@ -29,7 +29,7 @@ export default function UserBlock({ user }) {
         )}
         <button
           onClick={() => signOut()}
-          className="mt-3 px-4 py-1.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition"
+          className="mt-3 px-4 py-1.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition cursor-pointer"
         >
           {t("exit")}
         </button>

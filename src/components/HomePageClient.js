@@ -45,12 +45,7 @@ export default function HomePageClient({ session: initialSession }) {
         {t("title")}
       </p>
 
-      <div
-        className="mb-8 overflow-hidden transition-[height] duration-300 ease-out"
-        style={{
-          height: isAuthed ? 180 : 40,
-        }}
-      >
+      <div className="mb-8 overflow-hidden transition-[height] duration-300 ease-out">
         <UserBlock user={user} />
       </div>
       <div className="space-y-4">
