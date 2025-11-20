@@ -24,7 +24,7 @@ export default function SoundSwitcher() {
         ) : (
           <SpeakerSimpleSlashIcon size={18} weight="duotone" />
         )}
-        {t("sound")}
+        {t("soundTitle")}
       </div>
       {soundOptions.map((option) => (
         <label

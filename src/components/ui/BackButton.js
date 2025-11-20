@@ -7,16 +7,16 @@ import { useTranslations } from "next-intl";
 
 export default function BackButton() {
   const router = useRouter();
-  const t = useTranslations("Controls");
+  const t = useTranslations("Common");
 
   return (
     <Button
-      onClick={() => router.push("/")}
+      onClick={() => router.back()}
       variant="gray"
       className="absolute top-6 left-6 z-40"
     >
       <CaretCircleLeftIcon size={24} weight="duotone" />
-      {t("back")}
+      {t("backButton")}
     </Button>
   );
 }

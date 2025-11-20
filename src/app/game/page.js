@@ -60,7 +60,7 @@ export default function GamePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <p className="text-3xl font-extrabold text-white animate-pulse">
+        <p className="text-3xl font-extrabold text-white animate-pulse p-4">
           Завантаження сесії користувача...
         </p>
       </div>
@@ -75,7 +75,6 @@ export default function GamePage() {
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        {/* ПЕРЕДАЄМО ФУНКЦІЮ handleScoreSubmission ЯК ПРОП onGameOver */}
         <Game player={player} onGameOver={handleScoreSubmission} />
       </div>
     );

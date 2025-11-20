@@ -1,6 +1,5 @@
 "use client";
 import { useTranslations } from "next-intl";
-
 import Modal from "@/components/ui/Modal";
 import LangSwitcher from "@/components/ui/LangSwitcher";
 import ThemeSwitcher from "@/components/ui/ThemeSwitcher";
@@ -15,18 +14,31 @@ export default function Settings() {
         {t("title")}
       </h2>
 
-      <div className="mb-4">
-        <LangSwitcher />
-      </div>
-      <div className="border-t border-white/20 my-6"></div>
+      <div className="space-y-4">
+        <div>
+          <LangSwitcher />
+          <p className="text-sm text-slate-600 dark:text-slate-400 px-2 mt-4">
+            {t("languageDescription")}
+          </p>
+        </div>
 
-      <div className="mt-4">
-        <ThemeSwitcher />
-      </div>
-      <div className="border-t border-white/20 my-6"></div>
+        <div className="border-t border-white/20"></div>
 
-      <div className="mt-4">
-        <SoundSwitcher />
+        <div>
+          <ThemeSwitcher />
+          <p className="text-sm text-slate-600 dark:text-slate-400 px-2 mt-4">
+            {t("themeDescription")}
+          </p>
+        </div>
+
+        <div className="border-t border-white/20"></div>
+
+        <div>
+          <SoundSwitcher />
+          <p className="text-sm text-slate-600 dark:text-slate-400 px-2 mt-4">
+            {t("soundDescription")}
+          </p>
+        </div>
       </div>
     </Modal>
   );

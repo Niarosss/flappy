@@ -1,29 +1,32 @@
 {
+  "Common": {
+    "backButton": "Back"
+  },
   "HomePage": {
     "welcome": "Welcome!",
     "welcomeBack": "Welcome back!",
     "start": "Start game",
     "leader": "Leaderboard",
-    "logout": "Log Out",
     "settings": "Settings",
     "title": "Fly between pipes and set new records!",
     "words": "Click to fly • Avoid pipes • Beat your high score!",
     "signInGoogle": "Log In",
-    "exit": "Exit"
+    "help": "Help",
+    "exit": "Log Out"
   },
   "SettingsPage": {
     "title": "Settings",
-    "lang": "Language",
-    "theme": "Theme",
+    "languageTitle": "Language",
+    "languageDescription": "Choose your preferred language for the interface.",
+    "themeTitle": "Theme",
+    "themeDescription": "Switch between light and dark mode.",
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
-    "sound": "Sound",
+    "soundTitle": "Sound",
+    "soundDescription": "Enable or disable in-game sound effects.",
     "soundOn": "On",
     "soundOff": "Off"
-  },
-  "Controls": {
-    "back": "Back"
   },
   "LeaderPage": {
     "error": "Error loading data:",
@@ -42,12 +45,24 @@
     "gamePaused": "Game Paused",
     "score": "Score:",
     "resume": "Resume",
-    "exit": "Exit",
     "selectDifficulty": "Select Difficulty",
     "bestScore": "Best score:",
     "play": "Play",
     "clickToJump": "Click, Space, or W to Jump and Start!",
     "gameOver": "Game Over",
-    "retry": "Retry"
+    "retry": "Retry",
+    "exit": "Exit"
+  },
+  "HelpPage": {
+    "title": "Help",
+    "objectiveTitle": "Objective",
+    "objectiveText": "Fly the bird as far as you can through the pipes. Each pipe you pass scores one point.",
+    "controlsTitle": "Controls",
+    "keyboardControlsTitle": "Keyboard",
+    "jumpKey": "Press [Space] or [W] to jump.",
+    "pauseKey": "Press [Escape] to pause the game.",
+    "touchControlsTitle": "Touchscreen",
+    "touchText": "Tap anywhere on the screen to jump.",
+    "mouseControlsTitle": "Mouse"
   }
 }

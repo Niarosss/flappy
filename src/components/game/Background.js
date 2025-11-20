@@ -52,8 +52,15 @@ export default function Background() {
   const { isGameActive } = useGame();
   const { resolvedTheme } = useTheme();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const { width, height } = dimensions;
+  const HORIZON_Y = height - HORIZON_OFFSET;
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef(null);
+  const hasThemeChangedRef = useRef(false);
+  // ДОДАНО: Стан для керування анімацією хмар
+  const [isThemeAnimating, setIsThemeAnimating] = useState(false);
+  // ДОДАНО: Ref для прямого доступу до групи хмар
+  const cloudsRef = useRef(null);
 
   const theme = resolvedTheme || "light";
   const paused = isGameActive ? "" : "is-paused";
@@ -78,6 +85,10 @@ export default function Background() {
     if (!mounted) return;
     if (prevTheme.current === resolvedTheme) return;
 
+    hasThemeChangedRef.current = true;
+    // ДОДАНО: Починаємо анімацію переходу
+    setIsThemeAnimating(true);
+
     const from = prevTheme.current === "dark" ? COLORS.dark : COLORS.light;
     const to = resolvedTheme === "dark" ? COLORS.dark : COLORS.light;
 
@@ -94,11 +105,26 @@ export default function Background() {
         interp[key] = interpolateColor(from[key], to[key], progress);
       });
       setCurrentPalette(interp);
-      if (progress < 1) requestAnimationFrame(animate);
+
+      // ДОДАНО: Анімуємо хмари вручну
+      if (cloudsRef.current) {
+        const fastScrollX = -progress * width;
+        cloudsRef.current.style.transform = `translateX(${fastScrollX}px)`;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // ДОДАНО: Завершуємо анімацію і повертаємо керування CSS
+        setIsThemeAnimating(false);
+        if (cloudsRef.current) {
+          cloudsRef.current.style.transform = ""; // Скидаємо стиль
+        }
+      }
     }
 
     requestAnimationFrame(animate);
-  }, [resolvedTheme, mounted]);
+  }, [resolvedTheme, mounted, width]); // <-- Додано `width` в залежності
 
   if (!mounted || dimensions.width === 0) {
     return (
@@ -109,9 +135,6 @@ export default function Background() {
       />
     );
   }
-
-  const { width, height } = dimensions;
-  const HORIZON_Y = height - HORIZON_OFFSET;
 
   const sunY = theme === "light" ? 80 : height + 150;
   const moonY = theme === "dark" ? 120 : height + 150;
@@ -168,7 +191,8 @@ export default function Background() {
             cy={theme === "light" ? sunY : moonY}
             r={theme === "light" ? 50 : 35}
             fill={theme === "light" ? currentPalette.sun : currentPalette.moon}
-            initial={{ cy: height + 150 }}
+            // ЗМІНЕНО: Початкова анімація тепер умовна
+            initial={hasThemeChangedRef.current ? { cy: height + 150 } : false}
             animate={{ cy: theme === "light" ? sunY : moonY }}
             exit={{ cy: height + 150 }}
             transition={{ duration: 1 }}
@@ -197,17 +221,17 @@ export default function Background() {
         <defs>
           {/* Хмари */}
           <g id="clouds_pattern">
-            <g transform="translate(50,50) scale(0.6)">
+            <g transform="translate(150,50) scale(0.6)">
               <circle cx="0" cy="0" r="30" fill="white" />
               <circle cx="30" cy="10" r="40" fill="white" />
               <circle cx="60" cy="0" r="35" fill="white" />
             </g>
-            <g transform="translate(350,100) scale(0.9)">
+            <g transform="translate(550,100) scale(0.9)">
               <circle cx="0" cy="0" r="45" fill="white" />
               <circle cx="50" cy="10" r="55" fill="white" />
               <circle cx="100" cy="0" r="50" fill="white" />
             </g>
-            <g transform="translate(700,30) scale(1.2)">
+            <g transform="translate(1100,30) scale(1.2)">
               <circle cx="0" cy="0" r="60" fill="white" />
               <circle cx="60" cy="10" r="70" fill="white" />
               <circle cx="120" cy="0" r="65" fill="white" />
@@ -313,7 +337,11 @@ export default function Background() {
         </defs>
 
         {/* Хмари */}
-        <g className={`animate-clouds ${paused}`}>
+        <g
+          ref={cloudsRef}
+          // ЗМІНЕНО: Клас анімації тепер умовний
+          className={`${!isThemeAnimating ? "animate-clouds" : ""} ${paused}`}
+        >
           <use href="#clouds_pattern" x="0" />
           <use href="#clouds_pattern" x={width} />
           <use href="#clouds_pattern" x={width * 2} />

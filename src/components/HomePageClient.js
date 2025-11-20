@@ -10,6 +10,7 @@ import {
   GearSixIcon,
   BirdIcon,
   GoogleLogoIcon,
+  InfoIcon,
 } from "@phosphor-icons/react";
 import { useSession, signIn } from "next-auth/react";
 import UserBlock from "@/components/ui/UserBlock";
@@ -76,15 +77,24 @@ export default function HomePageClient({ session: initialSession }) {
           <TrophyIcon size={24} weight="duotone" />
           {t("leader")}
         </Button>
-
-        <Button
-          variant="gray"
-          className="w-full"
-          onClick={() => router.push("/settings")}
-        >
-          <GearSixIcon size={24} weight="duotone" />
-          {t("settings")}
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            variant="gray"
+            className="w-full"
+            onClick={() => router.push("/settings")}
+          >
+            <GearSixIcon size={24} weight="duotone" />
+            {t("settings")}
+          </Button>
+          <Button
+            variant="gray"
+            className="w-full"
+            onClick={() => router.push("/help")}
+          >
+            <InfoIcon size={24} weight="duotone" />
+            {t("help")}
+          </Button>
+        </div>
       </div>
       <div className="mt-4 pt-4 border-t border-neutral-300/30 dark:border-neutral-600/30 text-center text-sm text-neutral-600 dark:text-neutral-400">
         <p>{t("words")}</p>

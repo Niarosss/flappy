@@ -1,29 +1,33 @@
 {
+  "Common": {
+    "backButton": "Назад",
+    "exitButton": "Вийти"
+  },
   "HomePage": {
     "welcome": "Вітаю!",
     "welcomeBack": "З поверненням!",
     "start": "Розпочати гру",
     "leader": "Таблиця лідерів",
-    "logout": "Вихід",
     "settings": "Налаштування",
     "title": "Літайте між трубами і встановлюйте нові рекорди!",
     "words": "Натисніть, щоб летіти • Уникайте труб • Побийте свій рекорд!",
     "signInGoogle": "Увійти",
+    "help": "Допомога",
     "exit": "Вийти"
   },
   "SettingsPage": {
     "title": "Налаштування",
-    "lang": "Мова",
-    "theme": "Тема",
+    "languageTitle": "Мова",
+    "languageDescription": "Оберіть бажану мову інтерфейсу.",
+    "themeTitle": "Тема",
+    "themeDescription": "Перемикання між світлою та темною темою.",
     "themeLight": "Світла",
     "themeDark": "Темна",
     "themeSystem": "Системна",
-    "sound": "Звук",
+    "soundTitle": "Звук",
+    "soundDescription": "Увімкнути або вимкнути ігрові звукові ефекти.",
     "soundOn": "Увімк.",
     "soundOff": "Вимк."
-  },
-  "Controls": {
-    "back": "Назад"
   },
   "LeaderPage": {
     "error": "Помилка завантаження даних:",
@@ -42,12 +46,25 @@
     "gamePaused": "Гру призупинено",
     "score": "Рахунок:",
     "resume": "Відновити",
-    "exit": "Вихід",
     "selectDifficulty": "Оберіть складність",
     "bestScore": "Найкращий рахунок:",
     "play": "Грати",
     "clickToJump": "Натислніть ЛКМ, Пробіл або W, щоб стрибнути та почати!",
     "gameOver": "Гру закінчено",
-    "retry": "Повторити"
+    "retry": "Повторити",
+    "exit": "Вийти"
+  },
+  "HelpPage": {
+    "title": "Допомога",
+    "objectiveTitle": "Мета гри",
+    "objectiveText": "Проведіть пташку якомога далі через труби. Кожна пройдена труба дає одне очко.",
+    "controlsTitle": "Керування",
+    "keyboardControlsTitle": "Клавіатура",
+    "jumpKey": "Натисніть [Пробіл] або [W] / [Ц], щоб стрибнути.",
+    "pauseKey": "Натисніть [Escape], щоб поставити гру на паузу.",
+    "touchControlsTitle": "Сенсорний екран",
+    "touchText": "Торкніться будь-де на екрані, щоб стрибнути.",
+    "mouseControlsTitle": "Миша",
+    "clickText": "Натисніть ліву кнопку миші будь-де на екрані, щоб стрибнути."
   }
 }

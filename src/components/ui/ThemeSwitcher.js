@@ -29,7 +29,7 @@ export default function ThemeSwitcher() {
     return (
       <div className="flex justify-center rounded-xl overflow-hidden select-none backdrop-blur-sm border border-white/20 dark:border-white/10 bg-slate-300/10 dark:bg-slate-600/10">
         <div className="w-28 px-4 py-2 font-semibold border-r border-white/20 bg-slate-100/20 dark:bg-slate-400/20">
-          {t("theme")}
+          {t("themeTitle")}
         </div>
 
         {themeOptions.map((option) => (
@@ -48,7 +48,7 @@ export default function ThemeSwitcher() {
     <div className="flex justify-center rounded-xl overflow-hidden select-none backdrop-blur-sm border border-white/20 dark:border-white/10 bg-slate-300/10 dark:bg-slate-600/10">
       <div className="w-32 flex items-center gap-2 px-3 py-2 font-semibold border-r border-white/20 bg-slate-100/20 dark:bg-slate-400/20">
         <PaintRollerIcon size={18} weight="duotone" />
-        {t("theme")}
+        {t("themeTitle")}
       </div>
       {themeOptions.map((option) => (
         <label

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 export const useDifficultySettings = (difficulty, isMobile) => {
-  const speedModifier = isMobile ? 0.7 : 1.0;
+  const speedModifier = isMobile ? 0.9 : 1.0;
 
   const settings = useMemo(() => {
     const baseSettings = {

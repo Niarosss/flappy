@@ -262,8 +262,7 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
         ref={gameSceneRef}
         className="relative cursor-pointer overflow-hidden"
         style={{ width: gameDimensions.width, height: gameDimensions.height }}
-        onClick={handleJump}
-        onTouchStart={handleJump} // <-- ДОДАНО: Обробник для миттєвого дотику
+        onPointerDown={handleJump} // <-- ДОДАНО: Обробник для миттєвого дотику
       >
         {(uiState === "playing" ||
           uiState === "paused" ||
@@ -283,7 +282,7 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
             key="countdown-message"
             className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
           >
-            <span className="text-7xl font-bold text-white animate-pulse text-shadow-sm">
+            <span className="text-7xl font-bold text-white animate-ping text-shadow-sm">
               {countdown}
             </span>
           </div>
