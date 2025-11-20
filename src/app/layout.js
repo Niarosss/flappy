@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "next-auth/react";
 import { GameProvider } from "@/context/GameContext";
 import Background from "@/components/game/Background";
+
 import "./globals.css";
 
 const nunito = Nunito({

@@ -51,7 +51,6 @@ export const useGameKeybindings = ({
 
   // Клавіші для стрибка
   useKeybinding([" ", "w", "W", "ц", "Ц"], onJump, {
-    // ЗМІНЕНО: Дозволяємо стрибати і для старту гри, і під час гри
     active: uiState === "playing" || uiState === "ready",
   });
 
