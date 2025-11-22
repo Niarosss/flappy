@@ -2,7 +2,7 @@
 import React from "react";
 
 const base =
-  "flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold active:scale-95 transition-all duration-200 shadow-lg border border-black/10 dark:border-white/10 backdrop-blur-sm hover:shadow-[0_0_8px_var(--glow)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
+  "flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold active:scale-95 transition-all duration-200 shadow-lg border border-black/10 dark:border-white/10 backdrop-blur-sm hover:shadow-[0_0_8px_var(--glow)] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed cursor-pointer";
 
 const variants = {
   green:

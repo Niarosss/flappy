@@ -2,6 +2,10 @@
   "Common": {
     "backButton": "Back"
   },
+  "LoginPage": {
+    "title": "Login",
+    "signInWith": "Sign in with {providerName}"
+  },
   "HomePage": {
     "welcome": "Welcome!",
     "welcomeBack": "Welcome back!",
@@ -10,7 +14,7 @@
     "settings": "Settings",
     "title": "Fly between pipes and set new records!",
     "words": "Click to fly • Avoid pipes • Beat your high score!",
-    "signInGoogle": "Log In",
+    "signInToPlay": "Sign in to save progress",
     "help": "Help",
     "exit": "Log Out"
   },

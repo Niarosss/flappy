@@ -31,29 +31,19 @@ export async function proxy(request) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  // 1. ПЕРЕВІРКА/ОНОВЛЕННЯ СЕСІЇ AUTH.JS
-  // Запускаємо Auth.js middleware. Якщо це API запит Auth.js, він його обробить.
-  // Цей виклик оновить сесію і захистить /api/auth/* маршрути.
   const authResponse = await auth((req) => NextResponse.next())(request);
 
-  // Якщо Auth.js обробив запит (наприклад, вхід/вихід), повертаємо його відповідь
   if (
     authResponse.status !== 200 ||
     authResponse.headers.get("x-middleware-next")
   ) {
-    // Якщо це запит, який повинен обробити сам Auth.js, повертаємо його
-    // Ця перевірка може бути складною; простішим варіантом є перевірка маршруту.
     if (pathname.startsWith("/api/auth")) {
       return authResponse;
     }
   }
 
-  // 2. ВЛАСНА ЛОГІКА ПРОКСІ/ЛОКАЛІЗАЦІЇ
-
-  // НЕ робимо редирект для API, внутрішніх ресурсів, статичних файлів і non-GET запитів
   if (
-    // Тепер виключаємо Auth.js маршрути з вашої логіки локалізації
-    pathname.startsWith("/api/auth") || // [!code focus] Додано виняток для Auth.js
+    pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
@@ -62,8 +52,6 @@ export async function proxy(request) {
   ) {
     return NextResponse.next();
   }
-
-  // ... (Ваша логіка локалізації залишається без змін) ...
 
   const cookie = request.cookies.get(COOKIE_NAME)?.value;
   if (!cookie) {
