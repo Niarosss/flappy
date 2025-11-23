@@ -24,7 +24,7 @@
 ## Використані технології
 
 - **Фреймворк**: [Next.js](https://nextjs.org/) (App Router)
-- **Автентифікація**: [NextAuth.js](https://next-auth.js.org/)
+- **Автентифікація**: [Auth.js](https://auth.js/)
 - **Database ORM**: [Prisma](https://www.prisma.io/)
 - **Стилізація**: [Tailwind CSS](https://tailwindcss.com/)
 - **Анімації**: [Motion](https://motion.dev/)

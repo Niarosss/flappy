@@ -12,7 +12,7 @@ This project is presented in both English and Ukrainian.
 
 ## Features
 
-- **User Authentication**: Secure sign-in with Google or GitHub via NextAuth.js to save progress and scores.
+- **User Authentication**: Secure sign-in with Google or GitHub via Auth.js to save progress and scores.
 - **Global Leaderboard**: Compete with other players and see your rank on the global high-score table.
 - **Persistent High Scores**: Your personal best score is saved to your user profile.
 - **Classic Gameplay**: Familiar "tap to fly" mechanics, faithfully recreated in the browser.
@@ -24,10 +24,10 @@ This project is presented in both English and Ukrainian.
 ## Technologies Used
 
 - **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
+- **Authentication**: [Auth.js](https://auth.js/)
 - **Database ORM**: [Prisma](https://www.prisma.io/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Animation**: [Framer Motion](https://www.framer.com/motion/)
+- **Animation**: [Motion](https://www.motion.dev/)
 - **Internationalization**: `next-intl`
 - **Icons**: [Phosphor Icons](https://phosphoricons.com/)
 - **Language**: JavaScript
