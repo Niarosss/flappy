@@ -11,6 +11,7 @@ import { useTheme } from "next-themes";
 import { AnimatePresence } from "framer-motion";
 
 import Bird from "./game/Bird";
+import Pipe from "./game/Pipe";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import {
@@ -33,7 +34,6 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
   const [uiState, setUiState] = useState("difficulty"); // 'difficulty', 'ready', 'playing', 'paused', 'gameOver', 'countdown'
   const [birdStatus, setBirdStatus] = useState("playing");
   const [score, setScore] = useState(0);
-  const [bestScore, setBestScore] = useState(0);
   const [allBestScores, setAllBestScores] = useState({
     easy: 0,
     medium: 0,
@@ -45,8 +45,11 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
     height: 600,
   });
   const [countdown, setCountdown] = useState(0);
+  const [pipes, setPipes] = useState([]);
+  const pipeDomNodesRef = useRef(new Map());
 
-  const scoreUIRef = useRef(null);
+  const recordScore = allBestScores[difficulty] || 0;
+  const displayedBestScore = Math.max(score, recordScore);
   const gameActiveRef = useRef(false);
 
   const isMobile = gameDimensions.width < 768;
@@ -55,15 +58,9 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
 
   const settings = useDifficultySettings(difficulty, isMobile);
 
-  const onScoreUpdate = useCallback(
-    (newScore) => {
-      setScore(newScore);
-      if (scoreUIRef.current) {
-        scoreUIRef.current.textContent = newScore;
-      }
-    },
-    [scoreUIRef]
-  );
+  const onScoreUpdate = useCallback((newScore) => {
+    setScore(newScore);
+  }, []);
 
   const onGameOver = useCallback(
     (finalScore) => {
@@ -81,7 +78,6 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
   );
 
   const {
-    gameSceneRef,
     birdDomRef,
     startGame,
     stopGameLoop,
@@ -97,9 +93,12 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
     onScoreUpdate,
     onGameOver,
     playSound,
-    resolvedTheme,
     onCountdownUpdate: setCountdown,
+    onPipesUpdate: setPipes,
+    pipeDomNodesRef,
   });
+
+  const gameSceneRef = useRef(null);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -134,10 +133,6 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
   useEffect(() => {
     loadAllBestScores();
   }, [loadAllBestScores]);
-  useEffect(() => {
-    setBestScore(allBestScores[difficulty] || 0);
-    if (score > allBestScores[difficulty]) setBestScore(score);
-  }, [difficulty, allBestScores, score]);
 
   const handleStartGame = () => {
     setUiState("ready");
@@ -145,7 +140,6 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
 
   const handleJump = useCallback(
     (e) => {
-      // Запобігаємо стандартній поведінці (наприклад, скролу або подвійному кліку)
       if (e) e.preventDefault();
 
       if (uiState !== "playing" && uiState !== "ready") return;
@@ -169,15 +163,7 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
     stopGameLoop();
     setUiState("paused");
     setIsGameActive(false);
-    if (onGameOverProp && score > 0) onGameOverProp(score, difficulty);
-  }, [
-    uiState,
-    score,
-    difficulty,
-    stopGameLoop,
-    setIsGameActive,
-    onGameOverProp,
-  ]);
+  }, [uiState, stopGameLoop, setIsGameActive]);
 
   const handleResumeGame = useCallback(() => {
     if (uiState !== "paused") return;
@@ -195,13 +181,12 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
   const handleRestart = useCallback(() => {
     restartGame();
     gameActiveRef.current = false;
-    onScoreUpdate(0);
-    if (scoreUIRef.current) scoreUIRef.current.textContent = "0";
+    setScore(0);
     setBirdStatus("playing");
     setUiState("difficulty");
     setIsGameActive(false);
     loadAllBestScores();
-  }, [restartGame, onScoreUpdate, setIsGameActive, loadAllBestScores]);
+  }, [restartGame, setIsGameActive, loadAllBestScores]);
 
   const handleExitToMenu = useCallback(async () => {
     stopGameLoop();
@@ -238,14 +223,13 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
             className=" text-xl text-center"
             style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.5)" }}
           >
-            <span
-              ref={scoreUIRef}
-              className="font-bold text-neutral-700 dark:text-neutral-300"
-            >
-              0
+            <span className="font-bold text-neutral-700 dark:text-neutral-300">
+              {score}
             </span>
             <span className="text-neutral-300"> | </span>
-            <span className="text-green-600 font-bold">{bestScore}</span>
+            <span className="text-green-600 font-bold">
+              {displayedBestScore}
+            </span>
             <p className="text-neutral-700 dark:text-neutral-300 capitalize text-sm">
               {difficulty}
             </p>
@@ -262,7 +246,7 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
         ref={gameSceneRef}
         className="relative cursor-pointer overflow-hidden"
         style={{ width: gameDimensions.width, height: gameDimensions.height }}
-        onPointerDown={handleJump} // <-- ДОДАНО: Обробник для миттєвого дотику
+        onPointerDown={handleJump}
       >
         {(uiState === "playing" ||
           uiState === "paused" ||
@@ -274,6 +258,25 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
             leftPosition={BIRD_LEFT_POSITION}
           />
         )}
+
+        {/* Декларативний рендеринг труб */}
+        {pipes.map((pipeData) => (
+          <Pipe
+            key={pipeData.id}
+            ref={(node) => {
+              const map = pipeDomNodesRef.current;
+              if (node) {
+                map.set(pipeData.id, node);
+              } else {
+                map.delete(pipeData.id);
+              }
+            }}
+            pipeData={pipeData}
+            gameHeight={gameDimensions.height}
+            pipeWidth={PIPE_WIDTH}
+            theme={resolvedTheme}
+          />
+        ))}
       </div>
       <AnimatePresence>
         {/* === Модалка зворотного відліку === */}
@@ -304,6 +307,12 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
             <p className="text-xl mb-6 text-neutral-700 dark:text-neutral-300">
               {t("score")} <span className="font-bold">{score}</span>
             </p>
+            <p className="text-lg mb-4 text-neutral-700 dark:text-neutral-300">
+              {t("bestScore")}{" "}
+              <span className="font-bold text-green-600">
+                {displayedBestScore}
+              </span>
+            </p>
             <div className="flex flex-col gap-3">
               <Button variant="green" onClick={handleResumeGame}>
                 <PlayIcon size={24} weight="duotone" />
@@ -333,8 +342,8 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
               ))}
             </div>
             <p className="mt-4 text-base text-neutral-700 dark:text-neutral-400">
-              {t("bestScore")}{" "}
-              <span className="font-bold text-green-600">{bestScore}</span>
+              {t("bestScore")}
+              <span className="font-bold text-green-600">{recordScore}</span>
             </p>
             <div className="flex mt-4 gap-4">
               <Button
@@ -382,7 +391,9 @@ const Game = ({ player, onGameOver: onGameOverProp }) => {
             </p>
             <p className="text-lg mb-4 text-neutral-700 dark:text-neutral-300">
               {t("bestScore")}{" "}
-              <span className="font-bold text-green-600">{bestScore}</span>
+              <span className="font-bold text-green-600">
+                {displayedBestScore}
+              </span>
             </p>
             <div className="flex gap-3 justify-center">
               <Button variant="blue" onClick={handleRestart} className="flex-1">

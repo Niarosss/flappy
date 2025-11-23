@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useTheme } from "next-themes";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/context/GameContext";
 
 const COLORS = {
   light: {
-    sky: "#70c5ce",
+    skyTop: "#47a7d8",
+    skyBottom: "#70c5ce",
     grass: "#8bc34a",
     mountain: "#a6c761",
     trunk: "#8B4513",
@@ -17,7 +18,8 @@ const COLORS = {
     moon: "#f1f1f1",
   },
   dark: {
-    sky: "#0a0a2a",
+    skyTop: "#0a0a2a",
+    skyBottom: "#1c2a5e",
     grass: "#2e4600",
     mountain: "#264653",
     trunk: "#4e342e",
@@ -57,15 +59,12 @@ export default function Background() {
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef(null);
   const hasThemeChangedRef = useRef(false);
-  // ДОДАНО: Стан для керування анімацією хмар
   const [isThemeAnimating, setIsThemeAnimating] = useState(false);
-  // ДОДАНО: Ref для прямого доступу до групи хмар
   const cloudsRef = useRef(null);
 
   const theme = resolvedTheme || "light";
   const paused = isGameActive ? "" : "is-paused";
 
-  // Встановлюємо розміри
   useEffect(() => {
     setMounted(true);
     const update = () =>
@@ -86,7 +85,6 @@ export default function Background() {
     if (prevTheme.current === resolvedTheme) return;
 
     hasThemeChangedRef.current = true;
-    // ДОДАНО: Починаємо анімацію переходу
     setIsThemeAnimating(true);
 
     const from = prevTheme.current === "dark" ? COLORS.dark : COLORS.light;
@@ -106,7 +104,6 @@ export default function Background() {
       });
       setCurrentPalette(interp);
 
-      // ДОДАНО: Анімуємо хмари вручну
       if (cloudsRef.current) {
         const fastScrollX = -progress * width;
         cloudsRef.current.style.transform = `translateX(${fastScrollX}px)`;
@@ -115,16 +112,25 @@ export default function Background() {
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
-        // ДОДАНО: Завершуємо анімацію і повертаємо керування CSS
         setIsThemeAnimating(false);
         if (cloudsRef.current) {
-          cloudsRef.current.style.transform = ""; // Скидаємо стиль
+          cloudsRef.current.style.transform = "";
         }
       }
     }
 
     requestAnimationFrame(animate);
-  }, [resolvedTheme, mounted, width]); // <-- Додано `width` в залежності
+  }, [resolvedTheme, mounted, width]);
+
+  const stars = useMemo(() => {
+    if (theme !== "dark" || width === 0) return [];
+    return [...Array(50)].map((_, i) => ({
+      key: i,
+      cx: Math.random() * width,
+      cy: Math.random() * HORIZON_Y,
+      r: Math.random() * 1.5 + 0.5,
+    }));
+  }, [theme, width, height]);
 
   if (!mounted || dimensions.width === 0) {
     return (
@@ -175,13 +181,15 @@ export default function Background() {
         height="100%"
         preserveAspectRatio="xMidYMid slice"
       >
+        <defs>
+          <linearGradient id="sky-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={currentPalette.skyTop} />
+            <stop offset="100%" stopColor={currentPalette.skyBottom} />
+          </linearGradient>
+        </defs>
+
         {/* Небо */}
-        <motion.rect
-          width="100%"
-          height="100%"
-          fill={currentPalette.sky}
-          transition={{ duration: 3 }}
-        />
+        <rect width="100%" height="100%" fill="url(#sky-gradient)" />
 
         {/* Сонце/Місяць */}
         <AnimatePresence mode="wait">
@@ -191,13 +199,25 @@ export default function Background() {
             cy={theme === "light" ? sunY : moonY}
             r={theme === "light" ? 50 : 35}
             fill={theme === "light" ? currentPalette.sun : currentPalette.moon}
-            // ЗМІНЕНО: Початкова анімація тепер умовна
             initial={hasThemeChangedRef.current ? { cy: height + 150 } : false}
             animate={{ cy: theme === "light" ? sunY : moonY }}
             exit={{ cy: height + 150 }}
             transition={{ duration: 1 }}
           />
         </AnimatePresence>
+
+        {/* Зірки */}
+        {theme === "dark" &&
+          stars.map((star) => (
+            <circle
+              key={star.key}
+              cx={star.cx}
+              cy={star.cy}
+              r={star.r}
+              fill="white"
+              opacity={0.7}
+            />
+          ))}
 
         {/* Гори */}
         <path
@@ -318,22 +338,6 @@ export default function Background() {
               />
             </g>
           </g>
-
-          {/* Зірки */}
-          {theme === "dark" && (
-            <g id="stars_pattern">
-              {[...Array(50)].map((_, i) => (
-                <circle
-                  key={i}
-                  cx={Math.random() * width}
-                  cy={Math.random() * HORIZON_Y}
-                  r={Math.random() * 1.5 + 0.5}
-                  fill="white"
-                  opacity={0.7}
-                />
-              ))}
-            </g>
-          )}
         </defs>
 
         {/* Хмари */}
@@ -360,9 +364,6 @@ export default function Background() {
           <use href="#ground_details_pattern" x={width} />
           <use href="#ground_details_pattern" x={width * 2} />
         </g>
-
-        {/* Зірки */}
-        {theme === "dark" && <use href="#stars_pattern" />}
       </svg>
     </div>
   );

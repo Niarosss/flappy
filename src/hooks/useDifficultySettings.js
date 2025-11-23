@@ -7,23 +7,23 @@ export const useDifficultySettings = (difficulty, isMobile) => {
     const baseSettings = {
       easy: {
         gravity: 0.6,
-        jump: -8,
-        pipeSpeed: 7,
-        pipeInterval: 1800,
+        jump: -9,
+        pipeSpeed: 8,
+        pipeInterval: 1700,
         pipeGap: 140,
       },
       medium: {
         gravity: 0.7,
-        jump: -9,
-        pipeSpeed: 8,
-        pipeInterval: 1600,
+        jump: -10,
+        pipeSpeed: 9,
+        pipeInterval: 1500,
         pipeGap: 130,
       },
       hard: {
         gravity: 0.8,
-        jump: -10,
-        pipeSpeed: 9,
-        pipeInterval: 1400,
+        jump: -11,
+        pipeSpeed: 10,
+        pipeInterval: 1300,
         pipeGap: 120,
       },
     };

@@ -1,6 +1,4 @@
 import { useRef, useCallback, useEffect } from "react";
-import { createRoot } from "react-dom/client";
-import Pipe from "@/components/game/Pipe";
 
 const BIRD_SIZE_H = 28;
 
@@ -13,11 +11,10 @@ export const useGameLoop = ({
   onGameOver,
   playSound,
   onCountdownUpdate,
-  resolvedTheme,
+  onPipesUpdate,
+  pipeDomNodesRef,
 }) => {
-  const gameSceneRef = useRef(null);
   const birdDomRef = useRef(null);
-  const pipeRootsRef = useRef(new Map());
   const gameLoopRef = useRef(null);
   const birdVelocity = useRef(0);
   const birdY = useRef(gameDimensions.height / 2);
@@ -25,7 +22,7 @@ export const useGameLoop = ({
   const lastPipeTime = useRef(0);
   const lastFrameTime = useRef(performance.now());
   const pauseTimeRef = useRef(0);
-  const countdownTimerRef = useRef(0);
+  const countdownEndTimeRef = useRef(0);
   const loopStateRef = useRef("running");
   const scoreUpdatedForPipes = useRef(new Set());
   const scoreRef = useRef(0);
@@ -76,11 +73,6 @@ export const useGameLoop = ({
     }
   }, []);
 
-  const internalGameOver = useCallback(() => {
-    stopGameLoop();
-    onGameOver(scoreRef.current);
-  }, [stopGameLoop, onGameOver]);
-
   const gameLoop = useCallback(() => {
     if (!gameLoopRef.current) return;
 
@@ -90,16 +82,19 @@ export const useGameLoop = ({
     lastFrameTime.current = now;
 
     if (loopStateRef.current === "countdown") {
-      countdownTimerRef.current -= deltaTime / 60;
-      const currentSecond = Math.ceil(countdownTimerRef.current);
+      const remainingTime = Math.max(0, countdownEndTimeRef.current - now);
+      const currentSecond = Math.ceil(remainingTime / 1000);
       onCountdownUpdate(currentSecond);
 
-      if (countdownTimerRef.current <= 0) {
-        // Розраховуємо загальну тривалість паузи (включаючи відлік)
-        const totalPauseDuration = performance.now() - pauseTimeRef.current;
-        lastPipeTime.current += totalPauseDuration;
-
+      if (remainingTime <= 0) {
+        onCountdownUpdate(0);
         loopStateRef.current = "running";
+
+        if (pauseTimeRef.current > 0) {
+          const pauseDuration = performance.now() - pauseTimeRef.current;
+          lastPipeTime.current += pauseDuration;
+          pauseTimeRef.current = 0;
+        }
       }
 
       gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -111,41 +106,39 @@ export const useGameLoop = ({
     const newRotation = Math.min(Math.max(-30, birdVelocity.current * 6), 90);
 
     if (newY > gameDimensions.height - BIRD_SIZE_H || newY < 0) {
-      internalGameOver();
+      stopGameLoop();
+      onGameOver(scoreRef.current);
       return;
     }
     birdY.current = newY;
     if (birdDomRef.current)
       birdDomRef.current.style.transform = `translateY(${birdY.current}px) rotate(${newRotation}deg)`;
 
+    // --- Логіка труб ---
     const pipes = pipesRef.current;
-    for (let i = pipes.length - 1; i >= 0; i--) {
-      const pipe = pipes[i];
-      pipe.x -= settings.pipeSpeed * deltaTime;
+    const pipesToRemove = [];
 
-      const pipeInstance = pipeRootsRef.current.get(pipe.id);
-      if (pipeInstance) {
-        pipeInstance.root.render(
-          <Pipe
-            pipeData={pipe}
-            gameHeight={gameDimensions.height}
-            pipeWidth={pipeWidth}
-            theme={resolvedTheme}
-          />
-        );
+    for (const pipe of pipes) {
+      pipe.x -= difficultySettings.pipeSpeed * deltaTime;
+
+      const pipeNode = pipeDomNodesRef.current.get(pipe.id);
+      if (pipeNode) {
+        pipeNode.style.transform = `translateX(${pipe.x}px)`;
       }
 
       if (pipe.x < -pipeWidth) {
-        if (pipeInstance) {
-          pipeInstance.root.unmount();
-          pipeInstance.container.remove();
-          pipeRootsRef.current.delete(pipe.id);
-        }
-        pipes.splice(i, 1);
+        pipesToRemove.push(pipe.id);
       }
     }
 
-    if (now - lastPipeTime.current >= settings.pipeInterval) {
+    let pipesUpdated = false;
+
+    if (pipesToRemove.length > 0) {
+      pipesRef.current = pipes.filter((p) => !pipesToRemove.includes(p.id));
+      pipesUpdated = true;
+    }
+
+    if (now - lastPipeTime.current >= difficultySettings.pipeInterval) {
       lastPipeTime.current = now;
       const minTopHeight = 50;
       const maxTopHeight = gameDimensions.height - settings.pipeGap - 50;
@@ -158,22 +151,12 @@ export const useGameLoop = ({
         gap: settings.pipeGap,
         passed: false,
       };
-      pipes.push(newPipe);
+      pipesRef.current.push(newPipe);
+      pipesUpdated = true;
+    }
 
-      const container = document.createElement("div");
-      if (gameSceneRef.current) {
-        gameSceneRef.current.appendChild(container);
-      }
-      const root = createRoot(container);
-      root.render(
-        <Pipe
-          pipeData={newPipe}
-          gameHeight={gameDimensions.height}
-          pipeWidth={pipeWidth}
-          theme={resolvedTheme}
-        />
-      );
-      pipeRootsRef.current.set(newPipe.id, { root, container });
+    if (pipesUpdated) {
+      onPipesUpdate([...pipesRef.current]);
     }
 
     let scoreIncrement = 0;
@@ -195,7 +178,8 @@ export const useGameLoop = ({
     }
 
     if (checkCollision(birdY.current, pipes)) {
-      internalGameOver();
+      stopGameLoop();
+      onGameOver(scoreRef.current);
       return;
     }
 
@@ -208,9 +192,10 @@ export const useGameLoop = ({
     onScoreUpdate,
     playSound,
     checkCollision,
-    internalGameOver,
-    resolvedTheme,
+    onGameOver,
     onCountdownUpdate,
+    onPipesUpdate,
+    pipeDomNodesRef,
   ]);
 
   const resumeGameLoop = useCallback(() => {
@@ -222,7 +207,7 @@ export const useGameLoop = ({
 
   const triggerCountdown = useCallback(
     (seconds) => {
-      countdownTimerRef.current = seconds;
+      countdownEndTimeRef.current = performance.now() + seconds * 1000;
       loopStateRef.current = "countdown";
       onCountdownUpdate(seconds);
 
@@ -248,23 +233,20 @@ export const useGameLoop = ({
   const restartGame = useCallback(() => {
     stopGameLoop();
     loopStateRef.current = "running";
-    for (const [, instance] of pipeRootsRef.current.entries()) {
-      instance.root.unmount();
-      instance.container.remove();
-    }
-    pipeRootsRef.current.clear();
     pipesRef.current = [];
+    onPipesUpdate([]);
+    // ДОДАНО: Очищуємо карту DOM-вузлів
+    pipeDomNodesRef.current.clear();
     birdY.current = gameDimensions.height / 2;
     birdVelocity.current = 0;
     lastPipeTime.current = 0;
     scoreUpdatedForPipes.current.clear();
     scoreRef.current = 0;
-  }, [stopGameLoop, gameDimensions]);
+  }, [stopGameLoop, gameDimensions, onPipesUpdate, pipeDomNodesRef]);
 
   useEffect(() => stopGameLoop, [stopGameLoop]);
 
   return {
-    gameSceneRef,
     birdDomRef,
     startGame,
     stopGameLoop,
