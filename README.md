@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+[English](./README.md) | [Українська](./README.uk.md)
 
-## Getting Started
+# Flappy Bird Clone 🐦
 
-First, run the development server:
+This repository contains a modern, full-stack web clone of the classic Flappy Bird game. Built with Next.js, this project features a clean user interface, smooth animations, user authentication, and a global leaderboard to track high scores. The goal was to recreate the nostalgic gameplay experience using a modern tech stack.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+This project is presented in both English and Ukrainian.
+
+## Demo
+
+👉[View the live version](https://flappy.niaros.dev/)
+
+## Features
+
+- **User Authentication**: Secure sign-in with Google or GitHub via NextAuth.js to save progress and scores.
+- **Global Leaderboard**: Compete with other players and see your rank on the global high-score table.
+- **Persistent High Scores**: Your personal best score is saved to your user profile.
+- **Classic Gameplay**: Familiar "tap to fly" mechanics, faithfully recreated in the browser.
+- **Internationalization (i18n)**: Full support for English and Ukrainian languages using `next-intl`.
+- **Dark/Light Mode**: The theme automatically adapts to your system preferences and can be toggled manually in the settings.
+- **Responsive Design**: A seamless gaming experience on desktop, tablet, and mobile devices.
+- **Fluid Animations**: User interface transitions are powered by Framer Motion for a modern and polished feel.
+
+## Technologies Used
+
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
+- **Database ORM**: [Prisma](https://www.prisma.io/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Animation**: [Framer Motion](https://www.framer.com/motion/)
+- **Internationalization**: `next-intl`
+- **Icons**: [Phosphor Icons](https://phosphoricons.com/)
+- **Language**: JavaScript
+
+## Project Structure
+
+The project follows a feature-rich structure within the `src` directory, leveraging the Next.js App Router for clear separation of concerns.
+
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+src/
+├── 📁 app/              # Routing, server components, and API endpoints
+│   ├── 📁 api/          # API routes for authentication and scores
+│   ├── 📁 game/        # Main game page route
+│   ├── 📁 leaders/     # Leaderboard page route
+│   ├── 📁 settings/    # Settings page route
+│   ├── 📄 layout.js     # Root application layout
+│   └── 📄 page.js      # Home page (landing)
+├── 📁 components/      # Reusable React components
+│   ├── 📁 game/        # Game-specific components (Bird, Pipe)
+│   ├── 📁 ui/          # Generic UI elements (Button, Modal, Switchers)
+│   └── 📄 *Client.js  # Client-side wrappers for pages
+├── 📁 context/         # React Context for global state (Game, Theme)
+├── 📁 hooks/           # Custom React hooks for complex logic
+├── 📁 i18n/            # Configuration for internationalization
+├── 📁 lib/             # Core library functions (Prisma client)
+└── 📄 auth.js          # NextAuth.js server-side configuration
+```

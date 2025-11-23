@@ -21,8 +21,8 @@ import UserBlock from "@/components/ui/UserBlock";
 import { AnimatePresence, motion } from "motion/react";
 
 const providers = {
-  google: <GoogleLogoIcon size={24} weight="bold" />,
-  github: <GithubLogoIcon size={24} weight="bold" />,
+  google: <GoogleLogoIcon size={24} weight="duotone" />,
+  github: <GithubLogoIcon size={24} weight="duotone" />,
 };
 
 export default function HomePageClient({ session: initialSession }) {
@@ -49,11 +49,11 @@ export default function HomePageClient({ session: initialSession }) {
           Flappy Bird
         </h1>
       </div>
-      <p className="text-neutral-600 dark:text-neutral-300 mb-8">
+      <p className="text-neutral-600 dark:text-neutral-300 mb-6">
         {t("title")}
       </p>
 
-      <div className="mb-8 overflow-hidden transition-[height] duration-300 ease-out">
+      <div className="mb-4 overflow-hidden">
         <UserBlock user={user} />
       </div>
       <motion.div layout>
@@ -119,7 +119,7 @@ export default function HomePageClient({ session: initialSession }) {
                         onClick={() => setShowAuthOptions(false)}
                         disabled={isLoading}
                       >
-                        <XIcon size={24} />
+                        <XIcon size={18} />
                       </Button>
                     </div>
                   </div>

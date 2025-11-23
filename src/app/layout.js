@@ -15,14 +15,41 @@ const nunito = Nunito({
 });
 
 export const metadata = {
-  title: "Flappy Bird Game",
-  description: "Flappy Bird game built with Next.js",
+  title: {
+    default: "Flappy Bird Clone",
+    template: "%s | Flappy Bird",
+  },
+  description:
+    "A modern, full-stack web clone of the classic Flappy Bird game built with Next.js.",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
     shortcut: "/favicon.ico",
   },
   manifest: "/site.webmanifest",
+  openGraph: {
+    title: "Flappy Bird Clone",
+    description:
+      "Play the classic Flappy Bird game online! Built with Next.js.",
+    url: "https://flappy.niaros.dev",
+    siteName: "Flappy Bird",
+    images: [
+      {
+        url: "/web-app-manifest-512x512.png",
+        width: 512,
+        height: 512,
+      },
+    ],
+    locale: "uk_UA",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Flappy Bird Clone",
+    description:
+      "Play the classic Flappy Bird game online! Built with Next.js.",
+    images: ["/web-app-manifest-512x512.png"],
+  },
 };
 
 export default async function RootLayout({ children }) {

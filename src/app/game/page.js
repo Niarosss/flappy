@@ -4,6 +4,14 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Game from "@/components/GamePageClient";
 
+export const metadata = {
+  title: "Game",
+  description: "Start playing Flappy Bird and set a new high score!",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 export default function GamePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
