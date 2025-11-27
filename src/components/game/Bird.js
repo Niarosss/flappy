@@ -16,13 +16,12 @@ const Bird = forwardRef(function Bird({ birdStatus, leftPosition }, ref) {
       {`
         @keyframes flap {
           0% { transform: rotate(10deg); }
-          50% { transform: rotate(-30deg); } /* Більш виразний рух крила */
+          50% { transform: rotate(-30deg); }
           100% { transform: rotate(10deg); }
         }
         .flapping-wing {
-          /* Швидка анімація для "Flappy Bird" стилю */
           animation: flap 0.25s steps(3, end) infinite; 
-          transform-origin: 5px 15px; /* Точка обертання крила */
+          transform-origin: 5px 15px;
         }
       `}
     </style>

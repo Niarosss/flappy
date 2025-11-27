@@ -235,7 +235,6 @@ export const useGameLoop = ({
     loopStateRef.current = "running";
     pipesRef.current = [];
     onPipesUpdate([]);
-    // ДОДАНО: Очищуємо карту DOM-вузлів
     pipeDomNodesRef.current.clear();
     birdY.current = gameDimensions.height / 2;
     birdVelocity.current = 0;

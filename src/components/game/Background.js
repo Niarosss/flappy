@@ -5,28 +5,37 @@ import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/context/GameContext";
 
+// ЗМІНЕНО: Додано тінь для каміння
 const COLORS = {
   light: {
     skyTop: "#47a7d8",
     skyBottom: "#70c5ce",
     grass: "#8bc34a",
     mountain: "#a6c761",
+    mountainFar: "#bdd986",
     trunk: "#8B4513",
     leaf: "#558B2F",
+    leafShadow: "#426d24",
     bush: "#7CB342",
     sun: "#ffeb3b",
     moon: "#f1f1f1",
+    rock: "#a1a1a1",
+    rockShadow: "#8a8a8a",
   },
   dark: {
     skyTop: "#0a0a2a",
     skyBottom: "#1c2a5e",
     grass: "#2e4600",
     mountain: "#264653",
+    mountainFar: "#3a687a",
     trunk: "#4e342e",
     leaf: "#1b5e20",
+    leafShadow: "#144518",
     bush: "#33691e",
     sun: "#ffb300",
     moon: "#d0e0ff",
+    rock: "#555555",
+    rockShadow: "#444444",
   },
 };
 
@@ -206,20 +215,37 @@ export default function Background() {
           />
         </AnimatePresence>
 
-        {/* Зірки */}
-        {theme === "dark" &&
-          stars.map((star) => (
-            <circle
-              key={star.key}
-              cx={star.cx}
-              cy={star.cy}
-              r={star.r}
-              fill="white"
-              opacity={0.7}
-            />
-          ))}
+        <AnimatePresence>
+          {/* Зірки */}
+          {theme === "dark" &&
+            stars.map((star) => (
+              <motion.circle
+                key={star.key}
+                cx={star.cx}
+                cy={star.cy}
+                r={star.r}
+                fill="white"
+                initial={
+                  hasThemeChangedRef.current
+                    ? { opacity: 0, cx: star.cx + 100, cy: star.cy + 50 }
+                    : false
+                }
+                animate={{ opacity: 0.7, cx: star.cx, cy: star.cy }}
+                exit={{ opacity: 0, cx: star.cx - 100, cy: star.cy - 50 }}
+                transition={{ duration: 1 }}
+              />
+            ))}
+        </AnimatePresence>
 
         {/* Гори */}
+
+        <path
+          d={`M0 ${HORIZON_Y - 15} L${width * 0.3} ${HORIZON_Y - 40} L${
+            width * 0.6
+          } ${HORIZON_Y - 20} L${width} ${HORIZON_Y - 35} V${HORIZON_Y} H0 Z`}
+          fill={currentPalette.mountainFar}
+        />
+
         <path
           d={`M0 ${HORIZON_Y - 30} L${width * 0.25} ${HORIZON_Y} L${
             width * 0.5
@@ -237,7 +263,6 @@ export default function Background() {
           fill={currentPalette.grass}
         />
 
-        {/* Патерни */}
         <defs>
           {/* Хмари */}
           <g id="clouds_pattern">
@@ -258,84 +283,232 @@ export default function Background() {
             </g>
           </g>
 
-          {/* Кущі */}
+          {/* КУЩІ */}
           <g id="ground_details_pattern">
-            <path
-              d={`M10 ${HORIZON_Y} Q30 ${HORIZON_Y - 15}, 50 ${HORIZON_Y} L50 ${
-                HORIZON_Y - 5
-              } Q40 ${HORIZON_Y - 25}, 20 ${HORIZON_Y - 5} Z`}
-              fill={currentPalette.bush}
-              stroke={currentPalette.trunk}
-              strokeWidth="1"
-            />
-            <rect
-              x="200"
-              y={HORIZON_Y - 25}
-              width="60"
-              height="25"
-              fill={currentPalette.bush}
-              rx="10"
-            />
-            <circle cx="450" cy={HORIZON_Y - 3} r="8" fill="#555" />
-            <path
-              d={`M600 ${HORIZON_Y} Q620 ${
-                HORIZON_Y - 20
-              }, 640 ${HORIZON_Y} Q660 ${HORIZON_Y - 10}, 680 ${HORIZON_Y} Z`}
-              fill={currentPalette.bush}
-            />
+            {/* Кущ 1 */}
+            <g transform={`translate(150, ${HORIZON_Y})`}>
+              <path
+                d="M -20 0 C -30 -25, 0 -30, 20 0 Z"
+                fill={currentPalette.bush}
+              />
+              <path
+                d="M 20 0 C 0 -30, 10 -20, 15 -5 Z"
+                fill={currentPalette.leafShadow}
+                opacity="0.5"
+              />
+            </g>
+
+            {/* Кущ 2 */}
+            <g transform={`translate(900, ${HORIZON_Y}) scale(0.9)`}>
+              <path
+                d="M -25 0 L -15 -20 L 0 -15 L 15 -25 L 25 0 Z"
+                fill={currentPalette.bush}
+              />
+              <path
+                d="M 25 0 L 15 -25 L 5 -20 L 0 -15 L -5 -15 Z"
+                fill={currentPalette.leafShadow}
+                opacity="0.5"
+              />
+            </g>
+
+            {/* Камені 1 */}
+            <g transform={`translate(650, ${HORIZON_Y})`}>
+              <circle cx="-5" cy="-4" r="10" fill={currentPalette.rock} />
+              <circle cx="8" cy="-2" r="6" fill={currentPalette.rock} />
+              <path
+                d="M -5 -4 A 10 10 0 0 1 3 -11 A 10 10 0 0 0 -5 -4 Z"
+                fill={currentPalette.rockShadow}
+                opacity="0.7"
+              />
+              <path
+                d="M 8 -2 A 6 6 0 0 1 12 -6 A 6 6 0 0 0 8 -2 Z"
+                fill={currentPalette.rockShadow}
+                opacity="0.7"
+              />
+            </g>
+
+            {/* ДОДАНО: Кущ 3 (повтор) */}
+            <g transform={`translate(1600, ${HORIZON_Y}) scale(1.1)`}>
+              <path
+                d="M -20 0 C -30 -25, 0 -30, 20 0 Z"
+                fill={currentPalette.bush}
+              />
+              <path
+                d="M 20 0 C 0 -30, 10 -20, 15 -5 Z"
+                fill={currentPalette.leafShadow}
+                opacity="0.5"
+              />
+            </g>
+
+            {/* ДОДАНО: Камені 2 (варіація) */}
+            <g transform={`translate(1450, ${HORIZON_Y}) scale(0.8)`}>
+              <circle cx="-10" cy="-2" r="8" fill={currentPalette.rock} />
+              <circle cx="5" cy="-5" r="12" fill={currentPalette.rock} />
+              <path
+                d="M 5 -5 A 12 12 0 0 1 14 -14 A 12 12 0 0 0 5 -5 Z"
+                fill={currentPalette.rockShadow}
+                opacity="0.7"
+              />
+            </g>
           </g>
 
-          {/* Дерева */}
+          {/* Дерева (без змін) */}
           <g id="trees_pattern">
-            <g transform={`translate(100, ${HORIZON_Y}) scale(1.5)`}>
-              <rect
-                x="-5"
-                y="-60"
-                width="10"
-                height="60"
-                fill={currentPalette.trunk}
-              />
-              <polygon
-                points="-25,-30 25,-30 0,-70"
-                fill={currentPalette.leaf}
-              />
-              <polygon
-                points="-20,-50 20,-50 0,-85"
-                fill={currentPalette.leaf}
-              />
-              <polygon
-                points="-15,-70 15,-70 0,-100"
-                fill={currentPalette.leaf}
-              />
+            {/* Дерево 1: Гостроверхе */}
+            <g transform={`translate(100, ${HORIZON_Y}) scale(0.6)`}>
+              <g transform="translate(-208, -541)">
+                <path
+                  fill={currentPalette.trunk}
+                  d="M203.687 450.581h9.982v89.838h-9.982z"
+                />
+                <path
+                  fill={currentPalette.leaf}
+                  d="M242.184 475.076c0-18.505-33.506-79.806-33.506-79.806s-33.507 61.301-33.507 79.806 15.001 33.506 33.507 33.506 33.506-15.001 33.506-33.506z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M242.184 475.076c0-18.505-33.507-79.806-33.507-79.806v113.313c18.506 0 33.507-15.002 33.507-33.507z"
+                />
+              </g>
             </g>
-            <g transform={`translate(350, ${HORIZON_Y}) scale(1.2)`}>
-              <rect
-                x="-7"
-                y="-40"
-                width="14"
-                height="40"
-                fill={currentPalette.trunk}
-              />
-              <circle cx="-15" cy="-45" r="25" fill={currentPalette.leaf} />
-              <circle cx="15" cy="-50" r="30" fill={currentPalette.leaf} />
-              <circle cx="0" cy="-60" r="28" fill={currentPalette.leaf} />
+
+            {/* Дерево 2: Розлоге */}
+            <g transform={`translate(350, ${HORIZON_Y}) scale(0.8)`}>
+              <g transform="translate(-590, -541)">
+                <path
+                  fill={currentPalette.trunk}
+                  d="M620.991 486.211a6.802 6.802 0 0 1-6.793 6.794h-17.885V431.31h-9.982v48.663h-14.279a6.801 6.801 0 0 1-6.794-6.794v-27.866h-4.991v27.866c0 6.499 5.287 11.785 11.785 11.785h14.279v55.455h9.982v-42.424h17.885c6.497 0 11.784-5.287 11.784-11.785v-23.29h-4.991v23.291z"
+                />
+                <circle
+                  cx="591.322"
+                  cy="424.936"
+                  r="29.666"
+                  fill={currentPalette.leaf}
+                  transform="rotate(-45.001 591.32 424.945)"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M591.322 395.27v59.332c16.384 0 29.666-13.282 29.666-29.666s-13.282-29.666-29.666-29.666z"
+                />
+                <circle
+                  cx="562.763"
+                  cy="437.826"
+                  r="16.775"
+                  fill={currentPalette.leaf}
+                  transform="rotate(-48.685 562.805 437.83)"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M562.763 421.051v33.551c9.265 0 16.775-7.51 16.775-16.775 0-9.265-7.511-16.776-16.775-16.776z"
+                />
+                <circle
+                  cx="623.487"
+                  cy="454.602"
+                  r="16.775"
+                  fill={currentPalette.leaf}
+                  transform="rotate(-49.12 623.464 454.588)"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M623.487 437.827v33.551c9.265 0 16.775-7.511 16.775-16.775 0-9.266-7.511-16.776-16.775-16.776z"
+                />
+              </g>
             </g>
-            <g transform={`translate(600, ${HORIZON_Y}) scale(1)`}>
-              <rect
-                x="-4"
-                y="-35"
-                width="8"
-                height="35"
-                fill={currentPalette.trunk}
-              />
-              <polygon
-                points="-18,-15 18,-15 0,-50"
-                fill={currentPalette.leaf}
-              />
-              <polygon
-                points="-12,-30 12,-30 0,-60"
-                fill={currentPalette.leaf}
-              />
+
+            {/* ДЕРЕВО 3: Хвойне */}
+            <g transform={`translate(600, ${HORIZON_Y}) scale(0.6)`}>
+              <g transform="translate(-400, -541)">
+                <path
+                  fill={currentPalette.leaf}
+                  d="m400 395.27-35.353 113.313h70.706z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M435.353 508.583 400 395.27v113.313z"
+                />
+                <path
+                  fill={currentPalette.trunk}
+                  d="m416.357 462.085-2.768-4.153-8.598 5.732v-13.083h-9.982v13.083l-8.598-5.732-2.768 4.153 11.366 7.578v5.994l-8.598-5.732-2.768 4.152 11.366 7.578v5.993l-8.598-5.731-2.768 4.152 11.366 7.578v46.773h9.982v-46.773l11.366-7.578-2.768-4.152-8.598 5.731v-5.993l11.366-7.578-2.768-4.152-8.598 5.732v-5.994z"
+                />
+              </g>
+            </g>
+
+            {/* ДЕРЕВО 4: Кущисте  */}
+            <g transform={`translate(850, ${HORIZON_Y}) scale(0.65)`}>
+              <g transform="translate(-113, -671)">
+                <path
+                  fill={currentPalette.trunk}
+                  d="M145.498 617.116a6.801 6.801 0 0 1-6.794 6.794h-20.697v-24.123h2.599c3.474 0 6.3-2.825 6.3-6.299v-15.191h-4.991v15.191a1.31 1.31 0 0 1-1.309 1.308h-2.599v-33.827h-9.982v48.662H87.629a6.802 6.802 0 0 1-6.794-6.794V574.97h-4.991v27.867c0 6.499 5.287 11.785 11.785 11.785h20.397v55.455h9.982v-41.176h20.697c6.498 0 11.785-5.287 11.785-11.785v-13.032h-4.991v13.032z"
+                />
+                <path
+                  fill={currentPalette.leaf}
+                  d="M142.181 564.954c-3.228-16.615-15.058-28.941-29.165-28.941s-25.937 12.326-29.165 28.941h58.33z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M142.181 564.954c-3.228-16.615-15.058-28.941-29.165-28.941v28.941h29.165z"
+                />
+                <path
+                  fill={currentPalette.leaf}
+                  d="M101.251 592.993c-2.536-13.053-11.83-22.737-22.913-22.737s-20.377 9.683-22.913 22.737h45.826z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M101.251 592.993c-2.536-13.053-11.83-22.737-22.913-22.737v22.737h22.913z"
+                />
+                <path
+                  fill={currentPalette.leaf}
+                  d="M137.795 584.939c-1.481-7.625-6.911-13.282-13.385-13.282s-11.903 5.657-13.385 13.282h26.77z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M137.795 584.939c-1.482-7.625-6.911-13.282-13.385-13.282v13.282h13.385z"
+                />
+                <path
+                  fill={currentPalette.leaf}
+                  d="M171.577 609.104c-2.61-13.436-12.176-23.402-23.584-23.402-11.407 0-20.973 9.967-23.584 23.402h47.168z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M171.577 609.104c-2.61-13.436-12.176-23.402-23.584-23.402v23.402h23.584z"
+                />
+              </g>
+            </g>
+
+            {/* ДЕРЕВО 5: Хмара */}
+            <g transform={`translate(1300, ${HORIZON_Y}) scale(0.8)`}>
+              <g transform="translate(-686, -671)">
+                <path
+                  fill={currentPalette.trunk}
+                  d="M681.992 580.239h9.982v89.838h-9.982z"
+                />
+                <path
+                  fill={currentPalette.leaf}
+                  d="M737.194 592.146a22.4 22.4 0 0 0 .088-1.747c0-9.104-5.522-16.916-13.397-20.277.019-.372.056-.739.056-1.116 0-9.699-6.274-17.917-14.978-20.863.021-.392.056-.779.056-1.177 0-12.172-9.867-22.039-22.039-22.039s-22.039 9.867-22.039 22.039c0 .397.039.785.056 1.177-8.704 2.946-14.978 11.164-14.978 20.863 0 .377.038.744.056 1.116-7.876 3.361-13.397 11.173-13.397 20.277 0 .59.043 1.169.088 1.747-7.893 3.354-13.429 11.176-13.429 20.292 0 12.172 9.868 22.039 22.039 22.039h83.201c12.172 0 22.039-9.867 22.039-22.039.001-9.116-5.535-16.938-13.428-20.292z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M728.584 634.478c12.172 0 22.039-9.867 22.039-22.039 0-9.117-5.536-16.939-13.429-20.292a22.4 22.4 0 0 0 .088-1.747c0-9.104-5.521-16.916-13.397-20.277.019-.372.056-.739.056-1.116 0-9.699-6.274-17.917-14.978-20.863.021-.392.06-.779.06-1.177 0-12.172-9.867-22.039-22.04-22.039v109.551h41.601z"
+                />
+              </g>
+            </g>
+
+            {/* Дерево 6: Овальне ("Льодяник") */}
+            <g transform={`translate(1700, ${HORIZON_Y}) scale(0.55)`}>
+              <g transform="translate(-304, -671)">
+                <path
+                  fill={currentPalette.trunk}
+                  d="M299.348 567.415h9.982v102.662h-9.982z"
+                />
+                <path
+                  fill={currentPalette.leaf}
+                  d="M304.339 524.927c-18.505 0-33.506 15.001-33.506 33.506v46.3c0 18.505 15.001 33.506 33.506 33.506 18.505 0 33.507-15.001 33.507-33.506v-46.3c-.001-18.504-15.002-33.506-33.507-33.506z"
+                />
+                <path
+                  fill={currentPalette.leafShadow}
+                  d="M337.845 604.734v-46.3c0-18.505-15.001-33.506-33.507-33.506V638.24c18.506 0 33.507-15.001 33.507-33.506z"
+                />
+              </g>
             </g>
           </g>
         </defs>
