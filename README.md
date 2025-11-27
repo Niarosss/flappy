@@ -28,7 +28,7 @@ This project is presented in both English and Ukrainian.
 - **Database ORM**: [Prisma](https://www.prisma.io/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Animation**: [Motion](https://www.motion.dev/)
-- **Internationalization**: `next-intl`
+- **Internationalization**: [next-intl](https://next-intl.dev/)
 - **Icons**: [Phosphor Icons](https://phosphoricons.com/)
 - **Language**: JavaScript
 

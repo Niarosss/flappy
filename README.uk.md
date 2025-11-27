@@ -28,7 +28,7 @@
 - **Database ORM**: [Prisma](https://www.prisma.io/)
 - **Стилізація**: [Tailwind CSS](https://tailwindcss.com/)
 - **Анімації**: [Motion](https://motion.dev/)
-- **Інтернаціоналізація**: `next-intl`
+- **Інтернаціоналізація**: [next-intl](https://next-intl.dev/)
 - **Іконки**: [Phosphor Icons](https://phosphoricons.com/)
 - **Мова**: JavaScript
 
