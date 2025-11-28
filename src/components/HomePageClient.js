@@ -39,13 +39,13 @@ export default function HomePageClient({ session: initialSession }) {
 
   return (
     <Modal className="max-w-md text-center p-6">
-      <div className="mb-4 flex justify-center items-center gap-3">
+      <div className="mb-4 flex justify-center items-center gap-2 md:gap-3">
         <BirdIcon
           size={56}
           weight="duotone"
           className="text-yellow-700/50 dark:text-yellow-500/50"
         />
-        <h1 className="text-5xl font-extrabold text-cyan-950/60 dark:text-cyan-400/60 drop-shadow-sm">
+        <h1 className="md:text-5xl text-4xl font-extrabold text-cyan-950/60 dark:text-cyan-400/60 drop-shadow-sm">
           Flappy Bird
         </h1>
       </div>
@@ -53,7 +53,7 @@ export default function HomePageClient({ session: initialSession }) {
         {t("title")}
       </p>
 
-      <div className="mb-4 overflow-hidden">
+      <div className="mb-4 ">
         <UserBlock user={user} />
       </div>
       <motion.div layout>
@@ -140,19 +140,15 @@ export default function HomePageClient({ session: initialSession }) {
         <div className="flex gap-4">
           <Button
             variant="gray"
-            className="w-full"
+            className="w-full "
             onClick={() => router.push("/settings")}
           >
             <GearSixIcon size={24} weight="duotone" />
             {t("settings")}
           </Button>
-          <Button
-            variant="gray"
-            className="w-full"
-            onClick={() => router.push("/help")}
-          >
+          <Button variant="gray" onClick={() => router.push("/help")}>
             <InfoIcon size={24} weight="duotone" />
-            {t("help")}
+            <span className="hidden sm:ml-2 sm:inline">{t("help")}</span>
           </Button>
         </div>
       </motion.div>

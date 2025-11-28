@@ -8,7 +8,7 @@ export default function UserBlock({ user }) {
 
   if (user) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center">
+      <div className="flex flex-col items-center justify-center text-center">
         <p className="text-lg text-neutral-700 dark:text-neutral-200 font-bold mb-2">
           {t("welcomeBack")}
         </p>
