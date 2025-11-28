@@ -2,7 +2,7 @@
 
 # Flappy Bird Clone 🐦
 
-This repository contains a modern, full-stack web clone of the classic Flappy Bird game. Built with Next.js, this project features a clean user interface, smooth animations, user authentication, and a global leaderboard to track high scores. The goal was to recreate the nostalgic gameplay experience using a modern tech stack.
+A modern, full-stack web clone of the classic Flappy Bird game. Built with Next.js, this project features a clean user interface, smooth animations, user authentication, and a global leaderboard to track high scores. The goal was to recreate the nostalgic gameplay experience using a modern tech stack.
 
 This project is presented in both English and Ukrainian.
 
