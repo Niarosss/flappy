@@ -8,7 +8,7 @@ import { useGameLoop } from "@/hooks/useGameLoop";
 import { useGameKeybindings } from "@/hooks/useGameKeybindings";
 import { useDifficultySettings } from "@/hooks/useDifficultySettings";
 import { useTheme } from "next-themes";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "motion/react";
 
 import Bird from "./game/Bird";
 import Pipe from "./game/Pipe";
