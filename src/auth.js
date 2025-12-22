@@ -6,25 +6,23 @@ import GitHub from "next-auth/providers/github";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+  },
   providers: [
-    Google({
-      allowDangerousEmailAccountLinking: true,
-    }),
-    GitHub({
-      allowDangerousEmailAccountLinking: true,
-    }),
+    Google({ allowDangerousEmailAccountLinking: true }),
+    GitHub({ allowDangerousEmailAccountLinking: true }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
+      if (user) token.id = user.id;
       return token;
     },
-
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    async session({ session, token }) {
+      if (session.user && token?.id) {
+        // у session callback краще брати id з token, а не з user
+        // (у джерелах є приклади з jwt‑стратегією)
+        session.user.id = token.id;
       }
       return session;
     },

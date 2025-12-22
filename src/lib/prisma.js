@@ -1,21 +1,17 @@
-// src/lib/prisma.js
-
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "../../prisma/generated/client/client";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
-/**
- * Створює новий єдиний екземпляр Prisma Client з розширенням Accelerate.
- * @returns {PrismaClient}
- */
-const prismaClientSingleton = () => {
-  return new PrismaClient().$extends(withAccelerate());
-};
+const createPrisma = () =>
+  new PrismaClient({
+    accelerateUrl: process.env.DATABASE_URL,
+  }).$extends(withAccelerate());
 
-const globalForPrisma = global;
-const prisma = globalForPrisma.prismaGlobal ?? prismaClientSingleton();
+const globalForPrisma = globalThis;
 
-export default prisma;
+const prisma = globalForPrisma.prismaGlobal || createPrisma();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prismaGlobal = prisma;
 }
+
+export default prisma;

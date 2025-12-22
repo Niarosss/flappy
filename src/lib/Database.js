@@ -1,11 +1,5 @@
-import { PrismaClient } from "@/generated/prisma/client";
-const globalForPrisma = global;
+import prisma from "./prisma";
 
-const prisma = globalForPrisma.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
 class Database {
   /**
    * Зберігає або оновлює результат гри. Оновлює лише, якщо новий результат > bestScore.
